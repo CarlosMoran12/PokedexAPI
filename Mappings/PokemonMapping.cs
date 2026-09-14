@@ -5,13 +5,14 @@ namespace PokedexAPI.Mappings;
 
 public static class PokemonMapping
 {
-    public static PokemonDto ToDto(this Pokemon pokemon)
+    public static PokemonDto ToDto(this Pokemon item) => new()
     {
-        return new PokemonDto
-        {
-            Id = pokemon.Id,
-            Name = pokemon.Name,
-            ImageUrl = $"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon.Id}.png"
-        };
-    }
+        IdPokemon = item.IdPokemon,
+        NumeroPokedex = item.NumeroPokedex,
+        Nombre = item.Nombre,
+        Altura = item.Altura,
+        Peso = item.Peso,
+        Imagen = item.Imagen,
+        IdGeneracion = item.IdGeneracion
+    };
 }

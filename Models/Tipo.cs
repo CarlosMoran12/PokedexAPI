@@ -1,7 +1,7 @@
 namespace PokedexAPI.Models;
 
-public class Region
+public class Tipo
 {
-    public int IdRegion { get; set; }
+    public int IdTipo { get; set; }
     public string Nombre { get; set; } = string.Empty;
 }
