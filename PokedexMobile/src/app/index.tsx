@@ -120,12 +120,19 @@ export default function HomeScreen() {
             Busca especies, revisa sus datos y navega por tipos, regiones y generaciones.
           </Text>
 
-          <View style={styles.searchPanel}>
-            <SearchBox
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Buscar por nombre o número..."
-            />
+          <View
+            style={[
+              styles.searchPanel,
+              width < 700 && { flexDirection: "column" },
+            ]}
+          >
+            <View style={styles.searchInputWrap}>
+              <SearchBox
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Buscar por nombre o número..."
+              />
+            </View>
             <Link
               href={{ pathname: "/pokemon", params: query.trim() ? { query } : {} }}
               asChild
@@ -527,8 +534,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     alignItems: "stretch",
-    maxWidth: 720,
+    maxWidth: 760,
   },
+  searchInputWrap: { flex: 1, minWidth: 220 },
   heroCta: {
     minWidth: 180,
     borderRadius: 10,
