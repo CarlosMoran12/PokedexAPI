@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import {
   ActionButton,
@@ -395,7 +395,7 @@ export function PokemonDetailScreen() {
       </View>
       <View style={styles.actions}>
         <ActionButton
-          label="Actualizar datos"
+          label="Editar datos"
           disabled={store.loading}
           onPress={() =>
             router.push({
@@ -434,7 +434,7 @@ export function PokemonFormScreen({ edit }: { edit: boolean }) {
   if (edit && !existing)
     return (
       <ScreenShell>
-        <ScreenHeader title="Actualizar datos" back />
+        <ScreenHeader title="Editar datos" back />
         <EmptyState
           title="Pokémon no disponible"
           message={store.error ?? "Regresa al catálogo."}
@@ -800,7 +800,7 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
   if (edit && !existing)
     return (
       <ScreenShell>
-        <ScreenHeader title="Actualizar datos" back />
+        <ScreenHeader title="Editar datos" back />
         <EmptyState
           title="Pokémon no disponible"
           message={
@@ -813,10 +813,10 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
   return (
     <ScreenShell>
       <ScreenHeader
-        title={edit ? "Actualizar datos" : "Añadir Pokémon a la Pokédex"}
+        title={edit ? "Editar datos" : "Añadir Pokémon a la Pokédex"}
         subtitle={
           edit
-            ? "Sincroniza esta especie con el catálogo de referencia sin editar sus datos manualmente."
+            ? "Corrige altura o peso manualmente, o restaura los datos oficiales desde el catálogo."
             : "Elige un Pokémon existente; su número, nombre e imagen se completan automáticamente."
         }
         back
@@ -921,10 +921,7 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
             </View>
 
             {edit ? (
-              <View style={styles.detectedData}>
-                <TextLabel muted>
-                  Datos actuales: {existing?.Altura ?? "—"} m · {existing?.Peso ?? "—"} kg
-                </TextLabel>
+              <View style={styles.editFields}>
                 <TextLabel muted>
                   {store.generaciones.find(
                     (item) => item.IdGeneracion === existing?.IdGeneracion,
@@ -939,8 +936,29 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
                     return currentRegion ? ` · ${currentRegion.Nombre}` : "";
                   })()}
                 </TextLabel>
+
+                <TextLabel bold>Altura (m)</TextLabel>
+                <TextInput
+                  value={height}
+                  onChangeText={setHeight}
+                  keyboardType="decimal-pad"
+                  placeholder="Altura en metros"
+                  placeholderTextColor="#8090a4"
+                  style={styles.input}
+                />
+
+                <TextLabel bold>Peso (kg)</TextLabel>
+                <TextInput
+                  value={weight}
+                  onChangeText={setWeight}
+                  keyboardType="decimal-pad"
+                  placeholder="Peso en kilogramos"
+                  placeholderTextColor="#8090a4"
+                  style={styles.input}
+                />
+
                 <TextLabel muted>
-                  Al actualizar, la imagen, altura, peso, generación, región y tipos se volverán a sincronizar automáticamente con la especie #{String(existing?.NumeroPokedex ?? "").padStart(3, "0")}.
+                  Número nacional, nombre, imagen, generación, región y tipos están protegidos para conservar la especie correcta. "Actualizar desde catálogo" restaura también la altura y el peso oficiales.
                 </TextLabel>
               </View>
             ) : (
@@ -969,18 +987,35 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
             )}
 
             <View style={styles.actions}>
-              <ActionButton
-                label={edit ? "Actualizar desde catálogo" : "Añadir a la Pokédex"}
-                disabled={
-                  store.loading ||
-                  referenceLoading ||
-                  (!edit && !selectedReference)
-                }
-                onPress={() => {
-                  if (edit) void updateFromReference();
-                  else void save();
-                }}
-              />
+              {edit ? (
+                <>
+                  <ActionButton
+                    label="Guardar cambios"
+                    disabled={store.loading || referenceLoading}
+                    onPress={() => {
+                      void save();
+                    }}
+                  />
+                  <ActionButton
+                    label="Actualizar desde catálogo"
+                    secondary
+                    disabled={store.loading || referenceLoading}
+                    onPress={() => {
+                      void updateFromReference();
+                    }}
+                  />
+                </>
+              ) : (
+                <ActionButton
+                  label="Añadir a la Pokédex"
+                  disabled={
+                    store.loading || referenceLoading || !selectedReference
+                  }
+                  onPress={() => {
+                    void save();
+                  }}
+                />
+              )}
               <ActionButton
                 label="Cancelar"
                 secondary
@@ -1107,6 +1142,22 @@ const styles = StyleSheet.create({
     gap: 5,
     padding: 10,
     backgroundColor: "#f8fbfe",
+    borderRadius: 6,
+  },
+  editFields: {
+    gap: 8,
+    padding: 10,
+    backgroundColor: "#f8fbfe",
+    borderRadius: 6,
+  },
+  input: {
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: palette.ink,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: palette.line,
     borderRadius: 6,
   },
 });
