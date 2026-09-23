@@ -22,14 +22,16 @@ import {
 } from "@/data/pokedex-store";
 
 export const palette = {
-  ink: "#172b46",
-  blue: "#2c73bd",
-  dark: "#173b63",
-  muted: "#718198",
-  line: "#c8d9e9",
-  panel: "#d9edff",
-  canvas: "#f7fbff",
-  white: "#ffffff",
+  ink: "#132238",
+  blue: "#2F6FB3",
+  dark: "#173F6B",
+  red: "#E63946",
+  yellow: "#F4C542",
+  muted: "#6B7A90",
+  line: "#D7E1EC",
+  panel: "#EAF3FB",
+  canvas: "#F4F7FB",
+  white: "#FFFFFF",
 };
 
 export function ScreenShell({
@@ -179,14 +181,36 @@ export function Chip({
   selected = false,
   onPress,
   disabled = false,
+  backgroundColor,
+  textColor,
+  borderColor,
 }: {
   label: string;
   selected?: boolean;
   onPress?: () => void;
   disabled?: boolean;
+  backgroundColor?: string;
+  textColor?: string;
+  borderColor?: string;
 }) {
+  const customChipStyle =
+    !selected && (backgroundColor || borderColor)
+      ? {
+          backgroundColor: backgroundColor ?? "#EEF4FA",
+          borderColor: borderColor ?? palette.line,
+        }
+      : undefined;
+  const customTextStyle =
+    !selected && textColor ? { color: textColor } : undefined;
+
   const content = (
-    <ThemedText style={[styles.chipText, selected && styles.selectedText]}>
+    <ThemedText
+      style={[
+        styles.chipText,
+        customTextStyle,
+        selected && styles.selectedText,
+      ]}
+    >
       {label}
     </ThemedText>
   );
@@ -196,12 +220,12 @@ export function Chip({
       accessibilityState={{ selected, disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.chip, selected && styles.selectedChip]}
+      style={[styles.chip, customChipStyle, selected && styles.selectedChip]}
     >
       {content}
     </Pressable>
   ) : (
-    <View style={styles.chip}>{content}</View>
+    <View style={[styles.chip, customChipStyle]}>{content}</View>
   );
 }
 
@@ -394,39 +418,44 @@ const styles = StyleSheet.create({
   sectionTitle: { color: palette.ink, fontSize: 23, lineHeight: 30 },
   resultCount: { color: palette.blue, fontSize: 12, fontWeight: "700" },
   chip: {
-    minHeight: 44,
+    minHeight: 40,
     justifyContent: "center",
-    backgroundColor: "#e7f2fc",
-    paddingHorizontal: 12,
+    backgroundColor: "#EEF4FA",
+    paddingHorizontal: 13,
     paddingVertical: 8,
-    borderRadius: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: palette.line,
     alignSelf: "flex-start",
   },
-  selectedChip: { backgroundColor: palette.dark },
-  chipText: { color: "#31577e", fontSize: 12, fontWeight: "700" },
+  selectedChip: {
+    backgroundColor: palette.dark,
+    borderColor: palette.dark,
+  },
+  chipText: { color: "#31577E", fontSize: 12, fontWeight: "800" },
   selectedText: { color: palette.white },
   actionButton: {
-    backgroundColor: palette.dark,
-    paddingHorizontal: 15,
-    paddingVertical: 11,
-    borderRadius: 5,
+    backgroundColor: palette.blue,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 9,
     alignItems: "center",
   },
   secondaryButton: {
-    backgroundColor: "#e7f2fc",
+    backgroundColor: palette.white,
     borderWidth: 1,
-    borderColor: palette.line,
+    borderColor: "#B9CDE1",
   },
   dangerButton: {
-    backgroundColor: "#fff0f0",
+    backgroundColor: "#FFF1F2",
     borderWidth: 1,
-    borderColor: "#e3aaaa",
+    borderColor: "#F2B8BD",
   },
   disabledButton: { opacity: 0.45 },
   actionText: { color: palette.white, fontSize: 13, fontWeight: "800" },
-  darkActionText: { color: "#8b3030" },
+  darkActionText: { color: "#A52E38" },
   imageFrame: {
-    backgroundColor: palette.panel,
+    backgroundColor: "#E3F0FB",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -440,12 +469,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.line,
     backgroundColor: palette.white,
-    borderRadius: 7,
+    borderRadius: 12,
   },
   demoNotice: {
     borderLeftWidth: 3,
     borderLeftColor: palette.blue,
-    backgroundColor: "#eaf5ff",
+    backgroundColor: "#EAF3FB",
     padding: 9,
   },
   demoText: { color: "#41617e", fontSize: 11 },
