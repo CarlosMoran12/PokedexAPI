@@ -158,7 +158,9 @@ export function CatalogScreen({ kind }: { kind: CatalogKind }) {
       ) : null}
       <View style={styles.actions}>
         {success ? (
-          <Text accessibilityLiveRegion="polite">{success}</Text>
+          <Text accessibilityLiveRegion="polite" style={{ color: "#6FE0A0" }}>
+            {success}
+          </Text>
         ) : null}
         <SearchBox
           value={query}
@@ -175,12 +177,14 @@ export function CatalogScreen({ kind }: { kind: CatalogKind }) {
         <View style={styles.editor}>
           <TextLabel bold>Nombre</TextLabel>
           {validation ? (
-            <Text accessibilityRole="alert" style={{ color: "#8b3030" }}>
+            <Text accessibilityRole="alert" style={{ color: "#FF7C8E" }}>
               {validation}
             </Text>
           ) : null}
           {kind === "generaciones" && !store.regiones.length ? (
-            <Text>Crea una región antes de guardar una generación.</Text>
+            <Text style={{ color: palette.muted }}>
+              Crea una región antes de guardar una generación.
+            </Text>
           ) : null}
           <TextInput
             autoFocus
@@ -325,17 +329,19 @@ const styles = StyleSheet.create({
   editor: {
     gap: 10,
     padding: 14,
-    backgroundColor: "#eaf5ff",
+    backgroundColor: palette.surfaceAlt,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 7,
+    borderRadius: 14,
+    borderLeftWidth: 4,
+    borderLeftColor: palette.blue,
   },
   input: {
     height: 44,
     borderWidth: 1,
     borderColor: palette.line,
-    backgroundColor: "#fff",
-    borderRadius: 5,
+    backgroundColor: palette.surface,
+    borderRadius: 10,
     paddingHorizontal: 12,
     color: palette.ink,
   },
@@ -344,17 +350,22 @@ const styles = StyleSheet.create({
     padding: 8,
     borderWidth: 1,
     borderColor: palette.line,
-    backgroundColor: "#fff",
-    borderRadius: 4,
+    backgroundColor: palette.surface,
+    borderRadius: 999,
   },
-  choiceSelected: { backgroundColor: palette.dark },
+  choiceSelected: {
+    backgroundColor: palette.blue,
+    borderColor: palette.blue,
+  },
   editorActions: { flexDirection: "row", gap: 8 },
   row: {
     padding: 14,
     borderWidth: 1,
     borderColor: palette.line,
-    backgroundColor: "#fff",
-    borderRadius: 7,
+    backgroundColor: palette.surface,
+    borderRadius: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: "#2E5F96",
     gap: 12,
   },
   rowCopy: { gap: 2 },
