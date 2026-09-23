@@ -26,10 +26,19 @@ export default function HomeScreen() {
   const store = usePokedexStore();
   const { pokemon, regiones, tipos, generaciones } = store;
   const [query, setQuery] = useState("");
+
   const featured = useMemo(
-    () => pokemon.find((item) => item.NumeroPokedex === 384) ?? pokemon[0],
+    () => pokemon.find((item) => item.NumeroPokedex === 94) ?? pokemon[0],
     [pokemon],
   );
+  const showcasePokemon = useMemo(
+    () =>
+      pokemon.find((item) => item.NumeroPokedex === 448) ??
+      pokemon.find((item) => item.NumeroPokedex === 4) ??
+      featured,
+    [featured, pokemon],
+  );
+
   const featuredGeneration = store.generaciones.find(
     (item) => item.IdGeneracion === featured?.IdGeneracion,
   );
@@ -45,6 +54,7 @@ export default function HomeScreen() {
         )
         .filter(Boolean) as string[])
     : [];
+
   if (store.loading && pokemon.length === 0)
     return (
       <ScreenShell>
@@ -52,6 +62,7 @@ export default function HomeScreen() {
         <LoadingState />
       </ScreenShell>
     );
+
   if (store.error && pokemon.length === 0)
     return (
       <ScreenShell>
@@ -67,61 +78,120 @@ export default function HomeScreen() {
 
   return (
     <ScreenShell>
-      <View style={styles.brandHero}>
-        <View style={styles.brandTop}>
-          <View>
-            <Text style={styles.brandEyebrow}>POKÉDEXMASTER</Text>
-            <Text style={styles.brandTitle}>Tu Pokédex, más visual.</Text>
+      {width >= 760 ? (
+        <View style={styles.navbar}>
+          <View style={styles.brand}>
+            <View style={styles.brandBall}>
+              <Text style={styles.brandBallText}>●</Text>
+            </View>
+            <Text style={styles.brandName}>
+              POKÉDEX<Text style={styles.brandAccent}>MASTER</Text>
+            </Text>
           </View>
-          <View style={styles.brandMark}>
-            <Text style={styles.brandMarkText}>#</Text>
+
+          <View style={styles.navLinks}>
+            <NavLink href="/" label="Inicio" active />
+            <NavLink href="/pokemon" label="Pokédex" />
+            <NavLink href="/tipos" label="Tipos" />
+            <NavLink href="/regiones" label="Regiones" />
+            <NavLink href="/generaciones" label="Generaciones" />
+          </View>
+
+          <View style={styles.navBadge}>
+            <Text style={styles.navBadgeText}>#</Text>
           </View>
         </View>
-        <Text style={styles.brandSubtitle}>
-          Busca especies, revisa sus datos y navega por tipos, regiones y generaciones.
-        </Text>
-        <View style={styles.searchPanel}>
-          <SearchBox
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Buscar por nombre o número..."
-          />
-          <Link
-            href={{ pathname: "/pokemon", params: query.trim() ? { query } : {} }}
-            asChild
-          >
-            <Pressable style={styles.heroCta}>
-              <Text style={styles.heroCtaText}>Explorar Pokédex</Text>
-            </Pressable>
-          </Link>
+      ) : null}
+
+      <View
+        style={[
+          styles.showcase,
+          width < 760 && { flexDirection: "column" },
+        ]}
+      >
+        <View style={styles.showcaseCopy}>
+          <Text style={styles.kicker}>— EXPLORA. DESCUBRE. COMPLETA.</Text>
+          <Text style={styles.showcaseTitle}>
+            Tu Pokédex,{"
+"}
+            <Text style={styles.showcaseTitleAccent}>más visual.</Text>
+          </Text>
+          <Text style={styles.showcaseSubtitle}>
+            Busca especies, revisa sus datos y navega por tipos, regiones y generaciones.
+          </Text>
+
+          <View style={styles.searchPanel}>
+            <SearchBox
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Buscar por nombre o número..."
+            />
+            <Link
+              href={{ pathname: "/pokemon", params: query.trim() ? { query } : {} }}
+              asChild
+            >
+              <Pressable style={styles.heroCta}>
+                <Text style={styles.heroCtaText}>Explorar Pokédex →</Text>
+              </Pressable>
+            </Link>
+          </View>
+
+          <View style={styles.statsRow}>
+            <Stat value={pokemon.length} label="Pokémon" accent="red" />
+            <Stat value={tipos.length} label="Tipos" accent="blue" />
+            <Stat value={regiones.length} label="Regiones" accent="green" />
+            <Stat value={generaciones.length} label="Generaciones" accent="purple" />
+          </View>
         </View>
+
+        {showcasePokemon ? (
+          <View style={styles.showcaseArt}>
+            <View style={styles.glowRing}>
+              <PokemonImage pokemon={showcasePokemon} size="detail" />
+            </View>
+            <Text style={styles.showcasePokemonName}>{showcasePokemon.Nombre}</Text>
+            <Text style={styles.showcasePokemonMeta}>
+              #{String(showcasePokemon.NumeroPokedex).padStart(3, "0")}
+            </Text>
+          </View>
+        ) : null}
       </View>
+
       <DemoNotice mode={store.mode} />
+
       {featured ? (
         <View
           style={[
-            styles.hero,
-            width < 500 && { flexDirection: "column", gap: 14 },
+            styles.featured,
+            width < 700 && { flexDirection: "column", alignItems: "stretch" },
           ]}
         >
-          <View style={styles.heroCopy}>
-            <TextLabel small>
+          <View style={styles.featuredImage}>
+            <PokemonImage pokemon={featured} size="hero" />
+          </View>
+
+          <View style={styles.featuredCopy}>
+            <Text style={styles.featuredKicker}>
               DESTACADO · {featuredRegion?.Nombre ?? "REGIÓN NO DISPONIBLE"}
-            </TextLabel>
-            <TextLabel big>{featured.Nombre}</TextLabel>
-            <TextLabel muted>
-              Pokémon nacional #
-              {String(featured.NumeroPokedex).padStart(3, "0")}.
-            </TextLabel>
+            </Text>
+            <Text style={styles.featuredTitle}>{featured.Nombre}</Text>
+            <Text style={styles.featuredNumber}>
+              #{String(featured.NumeroPokedex).padStart(3, "0")}
+            </Text>
+
             <View style={styles.typeRow}>
               {featuredTypes.map((type) => (
                 <Badge key={type} label={type} />
               ))}
             </View>
+
+            <Text style={styles.featuredDescription}>
+              Consulta sus datos principales, generación, región y relaciones de tipo.
+            </Text>
           </View>
-          <PokemonImage pokemon={featured} size="hero" />
+
           <ActionButton
-            label="Ver detalle"
+            label="Ver detalle →"
             onPress={() =>
               router.push({
                 pathname: "/pokemon/[id]",
@@ -131,64 +201,146 @@ export default function HomeScreen() {
           />
         </View>
       ) : null}
+
       {pokemon.length ? (
         <>
-          <TextLabel bigSection>Pokémon destacados</TextLabel>
-          <View style={styles.accessGrid}>
-            {pokemon.slice(0, 4).map((item) => (
-              <Pressable
-                key={item.IdPokemon}
-                style={styles.accessCard}
-                accessibilityRole="button"
-                onPress={() =>
-                  router.push({
-                    pathname: "/pokemon/[id]",
-                    params: { id: String(item.IdPokemon) },
-                  })
-                }
-              >
-                <PokemonImage pokemon={item} />
-                <TextLabel section>{item.Nombre}</TextLabel>
-                <TextLabel muted>
-                  #{String(item.NumeroPokedex).padStart(3, "0")}
-                </TextLabel>
-                <TextLabel link>Ver detalle →</TextLabel>
+          <View style={styles.sectionHeadingRow}>
+            <Text style={styles.sectionTitle}>🔥 Pokémon destacados</Text>
+            <Link href="/pokemon" asChild>
+              <Pressable>
+                <Text style={styles.sectionLink}>Ver todos →</Text>
               </Pressable>
-            ))}
+            </Link>
+          </View>
+
+          <View style={styles.pokemonGrid}>
+            {pokemon.slice(0, 4).map((item) => {
+              const itemTypes = store.pokemonTipos
+                .filter((relation) => relation.IdPokemon === item.IdPokemon)
+                .map(
+                  (relation) =>
+                    store.tipos.find((type) => type.IdTipo === relation.IdTipo)
+                      ?.Nombre,
+                )
+                .filter(Boolean) as string[];
+
+              return (
+                <Pressable
+                  key={item.IdPokemon}
+                  style={({ pressed }) => [
+                    styles.pokemonCard,
+                    pressed && styles.pressed,
+                  ]}
+                  accessibilityRole="button"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/pokemon/[id]",
+                      params: { id: String(item.IdPokemon) },
+                    })
+                  }
+                >
+                  <PokemonImage pokemon={item} />
+                  <View style={styles.cardCopy}>
+                    <Text style={styles.cardTitle}>{item.Nombre}</Text>
+                    <Text style={styles.cardNumber}>
+                      #{String(item.NumeroPokedex).padStart(3, "0")}
+                    </Text>
+                    <View style={styles.typeRow}>
+                      {itemTypes.slice(0, 2).map((type) => (
+                        <Badge key={type} label={type} compact />
+                      ))}
+                    </View>
+                    <Text style={styles.cardLink}>Ver detalle →</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
           </View>
         </>
       ) : null}
+
       <View style={styles.sectionHeading}>
-        <TextLabel bigSection>Accesos rápidos</TextLabel>
-        <TextLabel muted>Consulta los catálogos disponibles.</TextLabel>
+        <Text style={styles.sectionTitle}>▦ Accesos rápidos</Text>
+        <Text style={styles.sectionSubtitle}>
+          Consulta los catálogos disponibles.
+        </Text>
       </View>
-      <View style={styles.accessGrid}>
+
+      <View style={styles.quickGrid}>
         <AccessCard
           href="/pokemon"
           title="Pokédex"
           count={pokemon.length}
           description="Consulta, filtra y administra Pokémon."
+          tone="red"
+          symbol="◉"
         />
         <AccessCard
           href="/tipos"
           title="Tipos"
           count={tipos.length}
           description="Catálogo y relaciones Pokémon–Tipo."
+          tone="blue"
+          symbol="◆"
         />
         <AccessCard
           href="/regiones"
           title="Regiones"
           count={regiones.length}
           description="Organiza las regiones del mundo Pokémon."
+          tone="green"
+          symbol="▥"
         />
         <AccessCard
           href="/generaciones"
           title="Generaciones"
           count={generaciones.length}
           description="Relaciona generaciones con regiones."
+          tone="purple"
+          symbol="≋"
         />
       </View>
     </ScreenShell>
+  );
+}
+
+function NavLink({
+  href,
+  label,
+  active = false,
+}: {
+  href: "/" | "/pokemon" | "/tipos" | "/regiones" | "/generaciones";
+  label: string;
+  active?: boolean;
+}) {
+  return (
+    <Link href={href} asChild>
+      <Pressable style={[styles.navLink, active && styles.navLinkActive]}>
+        <Text style={[styles.navLinkText, active && styles.navLinkTextActive]}>
+          {label}
+        </Text>
+      </Pressable>
+    </Link>
+  );
+}
+
+function Stat({
+  value,
+  label,
+  accent,
+}: {
+  value: number;
+  label: string;
+  accent: "red" | "blue" | "green" | "purple";
+}) {
+  return (
+    <View style={styles.stat}>
+      <View style={[styles.statDot, styles[`stat_${accent}`]]} />
+      <View>
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statLabel}>{label}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -197,65 +349,86 @@ function AccessCard({
   title,
   count,
   description,
+  tone,
+  symbol,
 }: {
   href: "/pokemon" | "/tipos" | "/regiones" | "/generaciones";
   title: string;
   count: number;
   description: string;
+  tone: "red" | "blue" | "green" | "purple";
+  symbol: string;
 }) {
   return (
     <Link href={href} asChild>
       <Pressable
-        style={({ pressed }) => [styles.accessCard, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.quickCard,
+          styles[`quick_${tone}`],
+          pressed && styles.pressed,
+        ]}
       >
-        <View style={styles.cardTop}>
-          <TextLabel section>{title}</TextLabel>
-          <View style={styles.count}>
-            <TextLabel>{count}</TextLabel>
-          </View>
+        <View style={[styles.quickIcon, styles[`quickIcon_${tone}`]]}>
+          <Text style={styles.quickIconText}>{symbol}</Text>
         </View>
-        <TextLabel muted>{description}</TextLabel>
-        <TextLabel link>Explorar →</TextLabel>
+
+        <View style={styles.quickCopy}>
+          <View style={styles.quickTitleRow}>
+            <Text style={styles.quickTitle}>{title}</Text>
+            <Text style={styles.quickCount}>{count}</Text>
+          </View>
+          <Text style={styles.quickDescription}>{description}</Text>
+        </View>
+
+        <Text style={styles.quickArrow}>→</Text>
       </Pressable>
     </Link>
   );
 }
 
 const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  fuego: { bg: "#FDE8E7", text: "#A83232", border: "#F4B4AE" },
-  agua: { bg: "#E4F0FF", text: "#245A9A", border: "#B9D4F8" },
-  planta: { bg: "#E6F5E8", text: "#2F6B3B", border: "#BBDDBF" },
-  eléctrico: { bg: "#FFF4C7", text: "#806300", border: "#E9D778" },
-  electrico: { bg: "#FFF4C7", text: "#806300", border: "#E9D778" },
-  fantasma: { bg: "#ECE8F5", text: "#5D4B7A", border: "#CFC4E3" },
-  veneno: { bg: "#F2E7F7", text: "#71458B", border: "#D8BCE4" },
-  psíquico: { bg: "#FBE8F0", text: "#9A3E64", border: "#EABFD0" },
-  psiquico: { bg: "#FBE8F0", text: "#9A3E64", border: "#EABFD0" },
-  hada: { bg: "#FBEAF3", text: "#9A4E73", border: "#E8C5D6" },
-  lucha: { bg: "#F7E8E4", text: "#874333", border: "#E4C1B8" },
-  roca: { bg: "#F1EBD8", text: "#786B32", border: "#D8CCA2" },
-  tierra: { bg: "#F5EEDB", text: "#765D28", border: "#DDCF9E" },
-  hielo: { bg: "#E7F7FA", text: "#35717C", border: "#B9E0E7" },
-  dragón: { bg: "#E8EAFB", text: "#4E57A3", border: "#C4C9ED" },
-  dragon: { bg: "#E8EAFB", text: "#4E57A3", border: "#C4C9ED" },
-  siniestro: { bg: "#E9EAEC", text: "#444B55", border: "#C8CCD1" },
-  acero: { bg: "#E8EEF3", text: "#526878", border: "#C6D2DC" },
-  volador: { bg: "#ECEBFA", text: "#5A5791", border: "#CBC9EA" },
-  bicho: { bg: "#EEF4D8", text: "#61721F", border: "#D2DEA2" },
-  normal: { bg: "#F1F2F4", text: "#5D6670", border: "#D5D8DD" },
+  fuego: { bg: "#4A1D12", text: "#FF9B6A", border: "#78341F" },
+  agua: { bg: "#132E50", text: "#7EB8FF", border: "#285487" },
+  planta: { bg: "#123523", text: "#6FE0A0", border: "#275C42" },
+  eléctrico: { bg: "#3A3110", text: "#F8D95A", border: "#6D5B20" },
+  electrico: { bg: "#3A3110", text: "#F8D95A", border: "#6D5B20" },
+  fantasma: { bg: "#2D1F4E", text: "#C8A5FF", border: "#513A7D" },
+  veneno: { bg: "#3B1643", text: "#E48AF2", border: "#682874" },
+  psíquico: { bg: "#431C33", text: "#FF8DBB", border: "#723454" },
+  psiquico: { bg: "#431C33", text: "#FF8DBB", border: "#723454" },
+  hada: { bg: "#421D35", text: "#F4A1CB", border: "#70405A" },
+  lucha: { bg: "#461F22", text: "#FF9B95", border: "#77373B" },
+  roca: { bg: "#393322", text: "#D8C983", border: "#605536" },
+  tierra: { bg: "#3D2B1E", text: "#DDA86E", border: "#6A4A31" },
+  hielo: { bg: "#14343B", text: "#8CE5F3", border: "#28616B" },
+  dragón: { bg: "#20254E", text: "#9AA8FF", border: "#3F4A83" },
+  dragon: { bg: "#20254E", text: "#9AA8FF", border: "#3F4A83" },
+  siniestro: { bg: "#252A33", text: "#C4CCD8", border: "#454D5B" },
+  acero: { bg: "#21303C", text: "#A9C4D8", border: "#3B566B" },
+  volador: { bg: "#242846", text: "#B0B6F2", border: "#454D7B" },
+  bicho: { bg: "#2A3416", text: "#BFD971", border: "#4D612B" },
+  normal: { bg: "#29313A", text: "#C9D2DC", border: "#4A5764" },
 };
 
-function Badge({ label }: { label: string }) {
+function Badge({
+  label,
+  compact = false,
+}: {
+  label: string;
+  compact?: boolean;
+}) {
   const tone =
     TYPE_COLORS[label.trim().toLowerCase()] ?? {
-      bg: "#EEF4FA",
-      text: "#31577E",
-      border: "#D7E1EC",
+      bg: "#17263A",
+      text: "#C8D7E8",
+      border: "#304762",
     };
+
   return (
     <View
       style={[
         styles.badge,
+        compact && styles.badgeCompact,
         { backgroundColor: tone.bg, borderColor: tone.border },
       ]}
     >
@@ -263,147 +436,187 @@ function Badge({ label }: { label: string }) {
     </View>
   );
 }
-function TextLabel({
-  children,
-  muted,
-  big,
-  bigSection,
-  section,
-  link,
-  small,
-}: {
-  children: React.ReactNode;
-  muted?: boolean;
-  big?: boolean;
-  bigSection?: boolean;
-  section?: boolean;
-  link?: boolean;
-  small?: boolean;
-}) {
-  return (
-    <Text
-      style={[
-        styles.text,
-        muted && styles.muted,
-        big && styles.heroTitle,
-        bigSection && styles.sectionTitle,
-        section && styles.cardTitle,
-        link && styles.link,
-        small && styles.heroLabel,
-      ]}
-    >
-      {children}
-    </Text>
-  );
-}
 
 const styles = StyleSheet.create({
-  text: { color: palette.ink, fontSize: 14, lineHeight: 20 },
-  muted: { color: palette.muted, fontSize: 13, lineHeight: 20 },
-
-  brandHero: {
-    backgroundColor: palette.dark,
-    borderRadius: 18,
-    padding: 22,
-    gap: 14,
-    borderTopWidth: 6,
-    borderTopColor: palette.red,
-  },
-  brandTop: {
+  navbar: {
+    minHeight: 64,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: palette.line,
+    backgroundColor: "#081522",
+    borderRadius: 16,
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    gap: 14,
+    gap: 18,
   },
-  brandEyebrow: {
-    color: "#9CC7F1",
-    fontSize: 11,
+  brand: { flexDirection: "row", alignItems: "center", gap: 10 },
+  brandBall: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: palette.red,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 6,
+    borderColor: "#EEF3F8",
+  },
+  brandBallText: { color: "#0B1220", fontSize: 8 },
+  brandName: {
+    color: palette.ink,
+    fontSize: 17,
     fontWeight: "900",
-    letterSpacing: 1.8,
+    letterSpacing: 0.5,
   },
-  brandTitle: {
-    color: palette.white,
-    fontSize: 30,
-    lineHeight: 36,
+  brandAccent: { color: palette.red },
+  navLinks: { flexDirection: "row", alignItems: "center", gap: 4 },
+  navLink: {
+    paddingHorizontal: 12,
+    paddingVertical: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  navLinkActive: { borderBottomColor: palette.red },
+  navLinkText: { color: palette.muted, fontSize: 13, fontWeight: "700" },
+  navLinkTextActive: { color: palette.ink },
+  navBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: "#2366A8",
+    backgroundColor: "#0F2A46",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  navBadgeText: { color: palette.ink, fontWeight: "900", fontSize: 18 },
+
+  showcase: {
+    minHeight: 390,
+    padding: 28,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#153253",
+    backgroundColor: "#071522",
+    flexDirection: "row",
+    alignItems: "center",
+    overflow: "hidden",
+    gap: 24,
+  },
+  showcaseCopy: { flex: 1.3, gap: 16 },
+  kicker: {
+    color: palette.red,
+    fontSize: 12,
     fontWeight: "900",
-    marginTop: 6,
+    letterSpacing: 1.5,
   },
-  brandSubtitle: {
-    color: "#D6E5F4",
-    fontSize: 14,
-    lineHeight: 21,
+  showcaseTitle: {
+    color: palette.ink,
+    fontSize: 46,
+    lineHeight: 50,
+    fontWeight: "900",
+  },
+  showcaseTitleAccent: { color: palette.red },
+  showcaseSubtitle: {
+    color: palette.muted,
+    fontSize: 15,
+    lineHeight: 23,
     maxWidth: 620,
   },
-  brandMark: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: palette.red,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  brandMarkText: {
-    color: palette.white,
-    fontSize: 22,
-    fontWeight: "900",
-  },
   searchPanel: {
-    backgroundColor: "#102F50",
-    borderRadius: 12,
-    padding: 10,
+    flexDirection: "row",
     gap: 10,
+    alignItems: "stretch",
+    maxWidth: 720,
   },
   heroCta: {
-    minHeight: 46,
+    minWidth: 180,
+    borderRadius: 10,
+    paddingHorizontal: 18,
     backgroundColor: palette.red,
-    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
   },
-  heroCtaText: {
-    color: palette.white,
-    fontSize: 13,
+  heroCtaText: { color: palette.white, fontSize: 13, fontWeight: "900" },
+  statsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 22,
+    marginTop: 4,
+  },
+  stat: { flexDirection: "row", alignItems: "center", gap: 9, minWidth: 100 },
+  statDot: { width: 10, height: 10, borderRadius: 5 },
+  stat_red: { backgroundColor: palette.red },
+  stat_blue: { backgroundColor: palette.blue },
+  stat_green: { backgroundColor: "#22C983" },
+  stat_purple: { backgroundColor: "#9B6CFF" },
+  statValue: { color: palette.ink, fontSize: 18, fontWeight: "900" },
+  statLabel: { color: palette.muted, fontSize: 11 },
+  showcaseArt: {
+    flex: 0.7,
+    minWidth: 240,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  glowRing: {
+    padding: 18,
+    borderRadius: 999,
+    backgroundColor: "#0C2237",
+    borderWidth: 1,
+    borderColor: "#17456C",
+  },
+  showcasePokemonName: {
+    color: palette.ink,
+    fontSize: 20,
     fontWeight: "900",
   },
+  showcasePokemonMeta: { color: palette.muted, fontSize: 12 },
 
-  hero: {
-    minHeight: 205,
+  featured: {
+    minHeight: 210,
+    padding: 20,
     borderRadius: 16,
-    backgroundColor: "#EAF3FB",
     borderWidth: 1,
-    borderColor: "#B9D4EC",
-    borderLeftWidth: 6,
+    borderColor: "#3A315E",
+    borderLeftWidth: 8,
     borderLeftColor: palette.red,
-    padding: 22,
+    backgroundColor: "#0E162A",
     flexDirection: "row",
-    overflow: "hidden",
     alignItems: "center",
-    gap: 16,
+    gap: 22,
   },
-  heroCopy: { flex: 1, gap: 10 },
-  searchRow: { gap: 10 },
-  heroLabel: {
+  featuredImage: {
+    padding: 10,
+    borderRadius: 16,
+    backgroundColor: "#21173D",
+  },
+  featuredCopy: { flex: 1, gap: 8 },
+  featuredKicker: {
     color: palette.red,
     fontSize: 11,
     fontWeight: "900",
-    letterSpacing: 1.2,
+    letterSpacing: 1.1,
   },
-  heroTitle: {
-    color: palette.dark,
-    fontSize: 34,
-    lineHeight: 41,
+  featuredTitle: {
+    color: palette.ink,
+    fontSize: 32,
     fontWeight: "900",
   },
-  typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  badge: {
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
+  featuredNumber: { color: palette.muted, fontSize: 14 },
+  featuredDescription: {
+    color: palette.muted,
+    fontSize: 13,
+    lineHeight: 20,
+    maxWidth: 520,
   },
-  badgeText: { fontSize: 12, fontWeight: "800" },
 
+  sectionHeadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
   sectionHeading: { gap: 2 },
   sectionTitle: {
     color: palette.ink,
@@ -411,38 +624,79 @@ const styles = StyleSheet.create({
     lineHeight: 31,
     fontWeight: "900",
   },
-  accessGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  accessCard: {
-    width: "47%",
+  sectionSubtitle: { color: palette.muted, fontSize: 13 },
+  sectionLink: { color: palette.red, fontSize: 12, fontWeight: "900" },
+
+  pokemonGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  pokemonCard: {
+    width: "23%",
     flexGrow: 1,
-    minWidth: 145,
-    backgroundColor: palette.white,
+    minWidth: 210,
+    minHeight: 165,
+    padding: 14,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: palette.line,
-    borderTopWidth: 4,
-    borderTopColor: palette.blue,
-    borderRadius: 14,
-    padding: 16,
-    gap: 9,
+    backgroundColor: palette.surface,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  cardTop: {
+  cardCopy: { flex: 1, gap: 5 },
+  cardTitle: { color: palette.ink, fontSize: 17, fontWeight: "900" },
+  cardNumber: { color: palette.muted, fontSize: 12 },
+  cardLink: { color: palette.red, fontSize: 12, fontWeight: "900" },
+
+  typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  badge: {
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  badgeCompact: { paddingHorizontal: 8, paddingVertical: 4 },
+  badgeText: { fontSize: 11, fontWeight: "800" },
+
+  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  quickCard: {
+    width: "23%",
+    flexGrow: 1,
+    minWidth: 220,
+    minHeight: 125,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  quick_red: { backgroundColor: "#23131B", borderColor: "#7D2940" },
+  quick_blue: { backgroundColor: "#0D2035", borderColor: "#1F568D" },
+  quick_green: { backgroundColor: "#0D2722", borderColor: "#176B52" },
+  quick_purple: { backgroundColor: "#21163D", borderColor: "#57349B" },
+  quickIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quickIcon_red: { backgroundColor: "#4B1725" },
+  quickIcon_blue: { backgroundColor: "#123B62" },
+  quickIcon_green: { backgroundColor: "#114A3B" },
+  quickIcon_purple: { backgroundColor: "#3E226F" },
+  quickIconText: { color: palette.white, fontSize: 20, fontWeight: "900" },
+  quickCopy: { flex: 1, gap: 4 },
+  quickTitleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 5,
+    gap: 8,
   },
-  cardTitle: {
-    color: palette.ink,
-    fontSize: 18,
-    lineHeight: 23,
-    fontWeight: "900",
-  },
-  count: {
-    backgroundColor: "#EAF3FB",
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-  },
-  link: { color: palette.red, fontSize: 12, fontWeight: "900" },
-  pressed: { opacity: 0.72 },
+  quickTitle: { color: palette.ink, fontSize: 16, fontWeight: "900" },
+  quickCount: { color: palette.muted, fontSize: 12, fontWeight: "800" },
+  quickDescription: { color: palette.muted, fontSize: 12, lineHeight: 18 },
+  quickArrow: { color: palette.ink, fontSize: 22 },
+
+  pressed: { opacity: 0.75 },
 });
