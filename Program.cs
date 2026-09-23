@@ -8,10 +8,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString =
     builder.Configuration.GetConnectionString("PokedexConnection")
-    ?? throw new InvalidOperationException("No se encontró la cadena de conexión.");
+    ?? throw new InvalidOperationException("No se encontrÃ³ la cadena de conexiÃ³n.");
 
 builder.Services.AddDbContext<CatalogoDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("ExpoDevelopment", policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:8081", "http://localhost:8082")
+                .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .AllowAnyHeader();
+        });
+    });
+}
 
 #region Servicios
 builder.Services.AddScoped<PokemonService>();
@@ -29,7 +43,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "PokedexMaster API",
         Version = "v1",
-        Description = "API REST para la aplicación PokedexMaster"
+        Description = "API REST para la aplicaciÃ³n PokedexMaster"
     });
 });
 #endregion
@@ -44,6 +58,11 @@ app.UseSwaggerUI(options =>
     options.RoutePrefix = "swagger";
 });
 #endregion
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("ExpoDevelopment");
+}
 
 app.MapGet("/", () => Results.Ok(new
 {
