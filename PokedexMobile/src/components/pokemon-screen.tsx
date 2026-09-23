@@ -32,6 +32,43 @@ import {
   type PokemonReferenceListItem,
 } from "@/data/pokemon-reference";
 
+const TYPE_TONES: Record<
+  string,
+  { backgroundColor: string; textColor: string; borderColor: string }
+> = {
+  fuego: { backgroundColor: "#FDE8E7", textColor: "#A83232", borderColor: "#F4B4AE" },
+  agua: { backgroundColor: "#E4F0FF", textColor: "#245A9A", borderColor: "#B9D4F8" },
+  planta: { backgroundColor: "#E6F5E8", textColor: "#2F6B3B", borderColor: "#BBDDBF" },
+  eléctrico: { backgroundColor: "#FFF4C7", textColor: "#806300", borderColor: "#E9D778" },
+  electrico: { backgroundColor: "#FFF4C7", textColor: "#806300", borderColor: "#E9D778" },
+  hielo: { backgroundColor: "#E7F7FA", textColor: "#35717C", borderColor: "#B9E0E7" },
+  lucha: { backgroundColor: "#F7E8E4", textColor: "#874333", borderColor: "#E4C1B8" },
+  veneno: { backgroundColor: "#F2E7F7", textColor: "#71458B", borderColor: "#D8BCE4" },
+  tierra: { backgroundColor: "#F5EEDB", textColor: "#765D28", borderColor: "#DDCF9E" },
+  volador: { backgroundColor: "#ECEBFA", textColor: "#5A5791", borderColor: "#CBC9EA" },
+  psíquico: { backgroundColor: "#FBE8F0", textColor: "#9A3E64", borderColor: "#EABFD0" },
+  psiquico: { backgroundColor: "#FBE8F0", textColor: "#9A3E64", borderColor: "#EABFD0" },
+  bicho: { backgroundColor: "#EEF4D8", textColor: "#61721F", borderColor: "#D2DEA2" },
+  roca: { backgroundColor: "#F1EBD8", textColor: "#786B32", borderColor: "#D8CCA2" },
+  fantasma: { backgroundColor: "#ECE8F5", textColor: "#5D4B7A", borderColor: "#CFC4E3" },
+  dragón: { backgroundColor: "#E8EAFB", textColor: "#4E57A3", borderColor: "#C4C9ED" },
+  dragon: { backgroundColor: "#E8EAFB", textColor: "#4E57A3", borderColor: "#C4C9ED" },
+  siniestro: { backgroundColor: "#E9EAEC", textColor: "#444B55", borderColor: "#C8CCD1" },
+  acero: { backgroundColor: "#E8EEF3", textColor: "#526878", borderColor: "#C6D2DC" },
+  hada: { backgroundColor: "#FBEAF3", textColor: "#9A4E73", borderColor: "#E8C5D6" },
+  normal: { backgroundColor: "#F1F2F4", textColor: "#5D6670", borderColor: "#D5D8DD" },
+};
+
+function getTypeTone(name: string) {
+  return (
+    TYPE_TONES[name.trim().toLowerCase()] ?? {
+      backgroundColor: "#EEF4FA",
+      textColor: "#31577E",
+      borderColor: "#D7E1EC",
+    }
+  );
+}
+
 export function PokemonListScreen() {
   const params = useLocalSearchParams<{
     regionId?: string;
@@ -155,17 +192,23 @@ function PokemonListContent() {
         <SectionTitle title="Filtros" count={filtered.length} />
         <TextLabel bold>Tipos</TextLabel>
         <View style={styles.chips}>
-          {store.tipos.map((type) => (
-            <Chip
-              key={type.IdTipo}
-              label={type.Nombre}
-              selected={typeId === type.IdTipo}
-              onPress={() => {
-                setTypeId(typeId === type.IdTipo ? null : type.IdTipo);
-                setPage(1);
-              }}
-            />
-          ))}
+          {store.tipos.map((type) => {
+            const tone = getTypeTone(type.Nombre);
+            return (
+              <Chip
+                key={type.IdTipo}
+                label={type.Nombre}
+                selected={typeId === type.IdTipo}
+                backgroundColor={tone.backgroundColor}
+                textColor={tone.textColor}
+                borderColor={tone.borderColor}
+                onPress={() => {
+                  setTypeId(typeId === type.IdTipo ? null : type.IdTipo);
+                  setPage(1);
+                }}
+              />
+            );
+          })}
         </View>
         <TextLabel bold>Regiones</TextLabel>
         <View style={styles.chips}>
@@ -376,15 +419,21 @@ export function PokemonDetailScreen() {
         <SectionTitle title="Tipos" count={relations.length} />
         {relations.length ? (
           <View style={styles.chips}>
-            {relations.map((relation) => (
-              <Chip
-                key={relation.IdPokemonTipo}
-                label={
-                  store.tipos.find((type) => type.IdTipo === relation.IdTipo)
-                    ?.Nombre ?? "Tipo no disponible"
-                }
-              />
-            ))}
+            {relations.map((relation) => {
+              const typeName =
+                store.tipos.find((type) => type.IdTipo === relation.IdTipo)
+                  ?.Nombre ?? "Tipo no disponible";
+              const tone = getTypeTone(typeName);
+              return (
+                <Chip
+                  key={relation.IdPokemonTipo}
+                  label={typeName}
+                  backgroundColor={tone.backgroundColor}
+                  textColor={tone.textColor}
+                  borderColor={tone.borderColor}
+                />
+              );
+            })}
           </View>
         ) : (
           <TextLabel muted>Sin tipos registrados.</TextLabel>
@@ -1038,10 +1087,10 @@ const styles = StyleSheet.create({
   filters: {
     gap: 10,
     padding: 14,
-    backgroundColor: "#eaf5ff",
+    backgroundColor: "#F8FBFF",
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 7,
+    borderRadius: 12,
   },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
@@ -1056,12 +1105,12 @@ const styles = StyleSheet.create({
     width: "47%",
     flexGrow: 1,
     minWidth: 145,
-    padding: 10,
-    gap: 4,
-    backgroundColor: "#fff",
+    padding: 14,
+    gap: 6,
+    backgroundColor: palette.white,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 7,
+    borderRadius: 12,
   },
   label: { color: palette.ink, fontSize: 15, lineHeight: 21 },
   muted: { color: palette.muted, fontSize: 12 },
@@ -1074,33 +1123,33 @@ const styles = StyleSheet.create({
     backgroundColor: palette.panel,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 8,
+    borderRadius: 16,
   },
   detailCopy: { width: "100%", gap: 6 },
   detailBox: {
     padding: 14,
     gap: 10,
-    backgroundColor: "#fff",
+    backgroundColor: palette.white,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 7,
+    borderRadius: 12,
   },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   form: {
     gap: 14,
     padding: 14,
-    backgroundColor: "#fff",
+    backgroundColor: palette.white,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 7,
+    borderRadius: 12,
   },
   referenceBox: {
     gap: 10,
     padding: 12,
-    backgroundColor: "#f5faff",
+    backgroundColor: "#F8FBFF",
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 7,
+    borderRadius: 12,
   },
   referenceGrid: {
     flexDirection: "row",
@@ -1114,10 +1163,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
     padding: 8,
-    backgroundColor: "#fff",
+    backgroundColor: palette.white,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 7,
+    borderRadius: 12,
   },
   referenceCardSelected: {
     borderColor: palette.blue,
@@ -1141,13 +1190,13 @@ const styles = StyleSheet.create({
   detectedData: {
     gap: 5,
     padding: 10,
-    backgroundColor: "#f8fbfe",
+    backgroundColor: "#F8FBFF",
     borderRadius: 6,
   },
   editFields: {
     gap: 8,
     padding: 10,
-    backgroundColor: "#f8fbfe",
+    backgroundColor: "#F8FBFF",
     borderRadius: 6,
   },
   input: {
@@ -1155,7 +1204,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     color: palette.ink,
-    backgroundColor: "#fff",
+    backgroundColor: palette.white,
     borderWidth: 1,
     borderColor: palette.line,
     borderRadius: 6,
