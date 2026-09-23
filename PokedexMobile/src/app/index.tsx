@@ -321,7 +321,12 @@ function NavLink({
 }) {
   return (
     <Link href={href} asChild>
-      <Pressable style={[styles.navLink, active && styles.navLinkActive]}>
+      <Pressable
+        style={StyleSheet.flatten([
+          styles.navLink,
+          active && styles.navLinkActive,
+        ])}
+      >
         <Text style={[styles.navLinkText, active && styles.navLinkTextActive]}>
           {label}
         </Text>
@@ -368,11 +373,13 @@ function AccessCard({
   return (
     <Link href={href} asChild>
       <Pressable
-        style={({ pressed }) => [
-          styles.quickCard,
-          styles[`quick_${tone}`],
-          pressed && styles.pressed,
-        ]}
+        style={({ pressed }) =>
+          StyleSheet.flatten([
+            styles.quickCard,
+            styles[`quick_${tone}`],
+            pressed && styles.pressed,
+          ])
+        }
       >
         <View style={[styles.quickIcon, styles[`quickIcon_${tone}`]]}>
           <Text style={styles.quickIconText}>{symbol}</Text>
