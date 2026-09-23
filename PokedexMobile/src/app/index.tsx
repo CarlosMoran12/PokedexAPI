@@ -67,24 +67,36 @@ export default function HomeScreen() {
 
   return (
     <ScreenShell>
-      <ScreenHeader
-        title="Explora el mundo Pokémon"
-        subtitle="Consulta Pokémon, tipos, regiones y generaciones."
-      />
-      <DemoNotice mode={store.mode} />
-      <View style={styles.searchRow}>
-        <SearchBox
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Buscar por nombre o número..."
-        />
-        <Link
-          href={{ pathname: "/pokemon", params: query.trim() ? { query } : {} }}
-          asChild
-        >
-          <ActionButton label="Explorar Pokédex" onPress={() => undefined} />
-        </Link>
+      <View style={styles.brandHero}>
+        <View style={styles.brandTop}>
+          <View>
+            <Text style={styles.brandEyebrow}>POKÉDEXMASTER</Text>
+            <Text style={styles.brandTitle}>Tu Pokédex, más visual.</Text>
+          </View>
+          <View style={styles.brandMark}>
+            <Text style={styles.brandMarkText}>#</Text>
+          </View>
+        </View>
+        <Text style={styles.brandSubtitle}>
+          Busca especies, revisa sus datos y navega por tipos, regiones y generaciones.
+        </Text>
+        <View style={styles.searchPanel}>
+          <SearchBox
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Buscar por nombre o número..."
+          />
+          <Link
+            href={{ pathname: "/pokemon", params: query.trim() ? { query } : {} }}
+            asChild
+          >
+            <Pressable style={styles.heroCta}>
+              <Text style={styles.heroCtaText}>Explorar Pokédex</Text>
+            </Pressable>
+          </Link>
+        </View>
       </View>
+      <DemoNotice mode={store.mode} />
       {featured ? (
         <View
           style={[
@@ -209,10 +221,45 @@ function AccessCard({
   );
 }
 
+const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  fuego: { bg: "#FDE8E7", text: "#A83232", border: "#F4B4AE" },
+  agua: { bg: "#E4F0FF", text: "#245A9A", border: "#B9D4F8" },
+  planta: { bg: "#E6F5E8", text: "#2F6B3B", border: "#BBDDBF" },
+  eléctrico: { bg: "#FFF4C7", text: "#806300", border: "#E9D778" },
+  electrico: { bg: "#FFF4C7", text: "#806300", border: "#E9D778" },
+  fantasma: { bg: "#ECE8F5", text: "#5D4B7A", border: "#CFC4E3" },
+  veneno: { bg: "#F2E7F7", text: "#71458B", border: "#D8BCE4" },
+  psíquico: { bg: "#FBE8F0", text: "#9A3E64", border: "#EABFD0" },
+  psiquico: { bg: "#FBE8F0", text: "#9A3E64", border: "#EABFD0" },
+  hada: { bg: "#FBEAF3", text: "#9A4E73", border: "#E8C5D6" },
+  lucha: { bg: "#F7E8E4", text: "#874333", border: "#E4C1B8" },
+  roca: { bg: "#F1EBD8", text: "#786B32", border: "#D8CCA2" },
+  tierra: { bg: "#F5EEDB", text: "#765D28", border: "#DDCF9E" },
+  hielo: { bg: "#E7F7FA", text: "#35717C", border: "#B9E0E7" },
+  dragón: { bg: "#E8EAFB", text: "#4E57A3", border: "#C4C9ED" },
+  dragon: { bg: "#E8EAFB", text: "#4E57A3", border: "#C4C9ED" },
+  siniestro: { bg: "#E9EAEC", text: "#444B55", border: "#C8CCD1" },
+  acero: { bg: "#E8EEF3", text: "#526878", border: "#C6D2DC" },
+  volador: { bg: "#ECEBFA", text: "#5A5791", border: "#CBC9EA" },
+  bicho: { bg: "#EEF4D8", text: "#61721F", border: "#D2DEA2" },
+  normal: { bg: "#F1F2F4", text: "#5D6670", border: "#D5D8DD" },
+};
+
 function Badge({ label }: { label: string }) {
+  const tone =
+    TYPE_COLORS[label.trim().toLowerCase()] ?? {
+      bg: "#EEF4FA",
+      text: "#31577E",
+      border: "#D7E1EC",
+    };
   return (
-    <View style={styles.badge}>
-      <Text style={{ color: "#fff" }}>{label}</Text>
+    <View
+      style={[
+        styles.badge,
+        { backgroundColor: tone.bg, borderColor: tone.border },
+      ]}
+    >
+      <Text style={[styles.badgeText, { color: tone.text }]}>{label}</Text>
     </View>
   );
 }
@@ -253,56 +300,130 @@ function TextLabel({
 const styles = StyleSheet.create({
   text: { color: palette.ink, fontSize: 14, lineHeight: 20 },
   muted: { color: palette.muted, fontSize: 13, lineHeight: 20 },
+
+  brandHero: {
+    backgroundColor: palette.dark,
+    borderRadius: 18,
+    padding: 22,
+    gap: 14,
+    borderTopWidth: 6,
+    borderTopColor: palette.red,
+  },
+  brandTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  brandEyebrow: {
+    color: "#9CC7F1",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1.8,
+  },
+  brandTitle: {
+    color: palette.white,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "900",
+    marginTop: 6,
+  },
+  brandSubtitle: {
+    color: "#D6E5F4",
+    fontSize: 14,
+    lineHeight: 21,
+    maxWidth: 620,
+  },
+  brandMark: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: palette.red,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  brandMarkText: {
+    color: palette.white,
+    fontSize: 22,
+    fontWeight: "900",
+  },
+  searchPanel: {
+    backgroundColor: "#102F50",
+    borderRadius: 12,
+    padding: 10,
+    gap: 10,
+  },
+  heroCta: {
+    minHeight: 46,
+    backgroundColor: palette.red,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  heroCtaText: {
+    color: palette.white,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+
   hero: {
-    minHeight: 190,
-    borderRadius: 10,
-    backgroundColor: palette.panel,
+    minHeight: 205,
+    borderRadius: 16,
+    backgroundColor: "#EAF3FB",
     borderWidth: 1,
-    borderColor: "#b9d8f3",
-    padding: 20,
+    borderColor: "#B9D4EC",
+    borderLeftWidth: 6,
+    borderLeftColor: palette.red,
+    padding: 22,
     flexDirection: "row",
     overflow: "hidden",
     alignItems: "center",
+    gap: 16,
   },
   heroCopy: { flex: 1, gap: 10 },
   searchRow: { gap: 10 },
   heroLabel: {
-    color: palette.blue,
+    color: palette.red,
     fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1,
+    fontWeight: "900",
+    letterSpacing: 1.2,
   },
   heroTitle: {
     color: palette.dark,
-    fontSize: 32,
-    lineHeight: 40,
-    fontWeight: "800",
+    fontSize: 34,
+    lineHeight: 41,
+    fontWeight: "900",
   },
   typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   badge: {
-    backgroundColor: palette.blue,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 4,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
   },
+  badgeText: { fontSize: 12, fontWeight: "800" },
+
   sectionHeading: { gap: 2 },
   sectionTitle: {
     color: palette.ink,
-    fontSize: 23,
-    lineHeight: 30,
-    fontWeight: "700",
+    fontSize: 24,
+    lineHeight: 31,
+    fontWeight: "900",
   },
-  accessGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  accessGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   accessCard: {
     width: "47%",
     flexGrow: 1,
     minWidth: 145,
-    backgroundColor: "#fff",
+    backgroundColor: palette.white,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 7,
-    padding: 14,
-    gap: 8,
+    borderTopWidth: 4,
+    borderTopColor: palette.blue,
+    borderRadius: 14,
+    padding: 16,
+    gap: 9,
   },
   cardTop: {
     flexDirection: "row",
@@ -312,16 +433,16 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: palette.ink,
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: "800",
+    fontSize: 18,
+    lineHeight: 23,
+    fontWeight: "900",
   },
   count: {
-    backgroundColor: "#e7f2fc",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    backgroundColor: "#EAF3FB",
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
   },
-  link: { color: palette.blue, fontSize: 12, fontWeight: "800" },
-  pressed: { opacity: 0.7 },
+  link: { color: palette.red, fontSize: 12, fontWeight: "900" },
+  pressed: { opacity: 0.72 },
 });
