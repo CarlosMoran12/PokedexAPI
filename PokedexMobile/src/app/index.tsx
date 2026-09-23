@@ -112,8 +112,7 @@ export default function HomeScreen() {
         <View style={styles.showcaseCopy}>
           <Text style={styles.kicker}>— EXPLORA. DESCUBRE. COMPLETA.</Text>
           <Text style={styles.showcaseTitle}>
-            Tu Pokédex,{"
-"}
+            Tu Pokédex,{"\n"}
             <Text style={styles.showcaseTitleAccent}>más visual.</Text>
           </Text>
           <Text style={styles.showcaseSubtitle}>
