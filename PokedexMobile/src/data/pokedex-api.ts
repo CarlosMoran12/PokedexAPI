@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+﻿import { Platform } from "react-native";
 import type {
   Generacion,
   Pokemon,
@@ -36,7 +36,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   } catch {
     throw new ApiError(
       0,
-      "No se pudo conectar. Comprueba tu conexión y que el servidor esté encendido.",
+      "No se pudo conectar. Comprueba tu conexiÃ³n y que el servidor estÃ© encendido.",
     );
   } finally {
     clearTimeout(timer);
@@ -45,10 +45,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const detail = await response.text();
     let message =
       response.status === 409
-        ? "Hay un registro duplicado o una relación que impide esta operación."
+        ? "Hay un registro duplicado o una relaciÃ³n que impide esta operaciÃ³n."
         : response.status === 404
-          ? "El registro ya no está disponible."
-          : "No se pudo completar la operación. Inténtalo de nuevo.";
+          ? "El registro ya no estÃ¡ disponible."
+          : "No se pudo completar la operaciÃ³n. IntÃ©ntalo de nuevo.";
     if (response.status < 500 && detail) {
       try {
         const parsed = JSON.parse(detail);
@@ -172,3 +172,7 @@ export const pokedexApi = {
   deleteGeneracion: (id: number) =>
     request<void>(`/api/generaciones/${id}`, { method: "DELETE" }),
 };
+
+
+
+

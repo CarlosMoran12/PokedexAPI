@@ -109,7 +109,7 @@ export default function HomeScreen() {
           width < 760 && { flexDirection: "column" },
         ]}
       >
-        <View style={styles.showcaseCopy}>
+        <View style={[styles.showcaseCopy, width < 760 && styles.showcaseCopyMobile]}>
           <Text style={styles.kicker}>— EXPLORA. DESCUBRE. COMPLETA.</Text>
           <Text style={styles.showcaseTitle}>
             Tu Pokédex,{"\n"}
@@ -142,7 +142,7 @@ export default function HomeScreen() {
             </Link>
           </View>
 
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, width < 760 && styles.statsRowMobile]}>
             <Stat value={pokemon.length} label="Pokémon" accent="red" />
             <Stat value={tipos.length} label="Tipos" accent="blue" />
             <Stat value={regiones.length} label="Regiones" accent="green" />
@@ -151,7 +151,7 @@ export default function HomeScreen() {
         </View>
 
         {showcasePokemon ? (
-          <View style={styles.showcaseArt}>
+          <View style={[styles.showcaseArt, width < 760 && styles.showcaseArtMobile]}>
             <View style={styles.glowRing}>
               <PokemonImage pokemon={showcasePokemon} size="detail" />
             </View>
@@ -373,27 +373,32 @@ function AccessCard({
   return (
     <Link href={href} asChild>
       <Pressable
-        style={({ pressed }) =>
-          StyleSheet.flatten([
-            styles.quickCard,
-            styles[`quick_${tone}`],
-            pressed && styles.pressed,
-          ])
-        }
+        style={({ pressed }) => [
+          styles.quickPressable,
+          pressed && styles.pressed,
+        ]}
       >
-        <View style={[styles.quickIcon, styles[`quickIcon_${tone}`]]}>
-          <Text style={styles.quickIconText}>{symbol}</Text>
-        </View>
-
-        <View style={styles.quickCopy}>
-          <View style={styles.quickTitleRow}>
-            <Text style={styles.quickTitle}>{title}</Text>
-            <Text style={styles.quickCount}>{count}</Text>
+        <View style={[styles.quickCard, styles["quick_" + tone]]}>
+          <View style={[styles.quickIcon, styles["quickIcon_" + tone]]}>
+            <Text style={styles.quickIconText}>{symbol}</Text>
           </View>
-          <Text style={styles.quickDescription}>{description}</Text>
-        </View>
 
-        <Text style={styles.quickArrow}>→</Text>
+          <View style={styles.quickCopy}>
+            <View style={styles.quickTitleRow}>
+              <Text style={styles.quickTitle}>{title}</Text>
+
+              <View style={styles.quickCountBadge}>
+                <Text style={styles.quickCount}>{count}</Text>
+              </View>
+            </View>
+
+            <Text style={styles.quickDescription}>{description}</Text>
+          </View>
+
+          <View style={styles.quickArrowBox}>
+            <Text style={styles.quickArrow}>{">"}</Text>
+          </View>
+        </View>
       </Pressable>
     </Link>
   );
@@ -517,6 +522,7 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   showcaseCopy: { flex: 1.3, gap: 16 },
+  showcaseCopyMobile: { flex: 0, width: "100%" },
   kicker: {
     color: palette.red,
     fontSize: 12,
@@ -558,6 +564,11 @@ const styles = StyleSheet.create({
     gap: 22,
     marginTop: 4,
   },
+  statsRowMobile: {
+    width: "100%",
+    gap: 14,
+    justifyContent: "space-between",
+  },
   stat: { flexDirection: "row", alignItems: "center", gap: 9, minWidth: 100 },
   statDot: { width: 10, height: 10, borderRadius: 5 },
   stat_red: { backgroundColor: palette.red },
@@ -572,6 +583,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
+  },
+  showcaseArtMobile: {
+    flex: 0,
+    minWidth: 0,
+    width: "100%",
+    marginTop: 8,
+    paddingVertical: 8,
   },
   glowRing: {
     padding: 18,
@@ -671,46 +689,136 @@ const styles = StyleSheet.create({
   badgeCompact: { paddingHorizontal: 8, paddingVertical: 4 },
   badgeText: { fontSize: 11, fontWeight: "800" },
 
-  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  quickGrid: {
+    width: "100%",
+    gap: 14,
+  },
+
+  quickPressable: {
+    width: "100%",
+  },
+
   quickCard: {
-    width: "23%",
-    flexGrow: 1,
-    minWidth: 220,
-    minHeight: 125,
+    width: "100%",
+    minHeight: 112,
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
   },
-  quick_red: { backgroundColor: "#23131B", borderColor: "#7D2940" },
-  quick_blue: { backgroundColor: "#0D2035", borderColor: "#1F568D" },
-  quick_green: { backgroundColor: "#0D2722", borderColor: "#176B52" },
-  quick_purple: { backgroundColor: "#21163D", borderColor: "#57349B" },
+
+  quick_red: {
+    backgroundColor: "#181620",
+    borderColor: "#6C2940",
+  },
+
+  quick_blue: {
+    backgroundColor: "#101D2B",
+    borderColor: "#25577E",
+  },
+
+  quick_green: {
+    backgroundColor: "#10231F",
+    borderColor: "#24664F",
+  },
+
+  quick_purple: {
+    backgroundColor: "#19172B",
+    borderColor: "#543782",
+  },
+
   quickIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
+    width: 58,
+    height: 58,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
-  quickIcon_red: { backgroundColor: "#4B1725" },
-  quickIcon_blue: { backgroundColor: "#123B62" },
-  quickIcon_green: { backgroundColor: "#114A3B" },
-  quickIcon_purple: { backgroundColor: "#3E226F" },
-  quickIconText: { color: palette.white, fontSize: 20, fontWeight: "900" },
-  quickCopy: { flex: 1, gap: 4 },
+
+  quickIcon_red: {
+    backgroundColor: "#59192A",
+  },
+
+  quickIcon_blue: {
+    backgroundColor: "#143F65",
+  },
+
+  quickIcon_green: {
+    backgroundColor: "#12503E",
+  },
+
+  quickIcon_purple: {
+    backgroundColor: "#45247A",
+  },
+
+  quickIconText: {
+    color: palette.white,
+    fontSize: 21,
+    fontWeight: "900",
+  },
+
+  quickCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 6,
+  },
+
   quickTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: 8,
   },
-  quickTitle: { color: palette.ink, fontSize: 16, fontWeight: "900" },
-  quickCount: { color: palette.muted, fontSize: 12, fontWeight: "800" },
-  quickDescription: { color: palette.muted, fontSize: 12, lineHeight: 18 },
-  quickArrow: { color: palette.ink, fontSize: 22 },
+
+  quickTitle: {
+    color: palette.ink,
+    fontSize: 18,
+    fontWeight: "900",
+    flexShrink: 1,
+  },
+
+  quickCountBadge: {
+    minWidth: 32,
+    height: 26,
+    paddingHorizontal: 9,
+    borderRadius: 13,
+    backgroundColor: "#263142",
+    borderWidth: 1,
+    borderColor: "#3B4A5F",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  quickCount: {
+    color: palette.ink,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+
+  quickDescription: {
+    color: palette.muted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+
+  quickArrowBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#FF3652",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  quickArrow: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    lineHeight: 22,
+    fontWeight: "900",
+  },
 
   pressed: { opacity: 0.75 },
 });
