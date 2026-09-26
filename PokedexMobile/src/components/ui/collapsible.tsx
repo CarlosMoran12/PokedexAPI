@@ -1,6 +1,7 @@
+import { AnimatedPressable } from "@/components/animated-pressable";
 import { SymbolView } from 'expo-symbols';
 import { PropsWithChildren, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
@@ -14,7 +15,7 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
 
   return (
     <ThemedView>
-      <Pressable
+      <AnimatedPressable
         style={({ pressed }) => [styles.heading, pressed && styles.pressedHeading]}
         onPress={() => setIsOpen((value) => !value)}>
         <ThemedView type="backgroundElement" style={styles.button}>
@@ -28,7 +29,7 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
         </ThemedView>
 
         <ThemedText type="small">{title}</ThemedText>
-      </Pressable>
+      </AnimatedPressable>
       {isOpen && (
         <Animated.View entering={FadeIn.duration(200)}>
           <ThemedView type="backgroundElement" style={styles.content}>

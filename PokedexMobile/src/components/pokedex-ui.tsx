@@ -1,12 +1,15 @@
-import { Image } from "expo-image";
+import { palette, finish, gradient } from "@/constants/visual-system";
+import { ModuleIcon } from "./module-icon";
+import { PokemonArtwork } from "./pokemon-artwork";
+import { AnimatedPressable } from "@/components/animated-pressable";
 import { router } from "expo-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -14,27 +17,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { FloatingPokemon } from "./home-motion";
 import { ThemedText } from "@/components/themed-text";
 import { MaxContentWidth } from "@/constants/theme";
 import {
-  isLegacyAutomaticPokemonImage,
   type Pokemon,
 } from "@/data/pokedex-store";
 
-export const palette = {
-  ink: "#F3F6FB",
-  blue: "#3B82F6",
-  dark: "#0B1220",
-  red: "#FF334F",
-  yellow: "#F4C542",
-  muted: "#A9B4C7",
-  line: "#22324A",
-  panel: "#0F1D2E",
-  canvas: "#07111F",
-  surface: "#101B2D",
-  surfaceAlt: "#14233A",
-  white: "#FFFFFF",
-};
+export { palette } from '@/constants/visual-system';
+
 
 export function ScreenShell({
   children,
@@ -90,7 +81,8 @@ export function ScreenHeader({
   return (
     <View style={styles.header}>
       {back ? (
-        <Pressable
+        <AnimatedPressable
+          pressScale={0.95}
           accessibilityLabel="Volver"
           accessibilityRole="button"
           onPress={() =>
@@ -99,7 +91,7 @@ export function ScreenHeader({
           style={styles.backButton}
         >
           <ThemedText style={styles.backText}>‹</ThemedText>
-        </Pressable>
+        </AnimatedPressable>
       ) : null}
       <View style={styles.headerCopy}>
         <ThemedText style={styles.eyebrow}>{eyebrow}</ThemedText>
@@ -112,7 +104,7 @@ export function ScreenHeader({
       </View>
       {back ? null : (
         <View style={styles.headerBadge}>
-          <ThemedText style={styles.headerBadgeText}>#</ThemedText>
+          <ModuleIcon size={44} tone={title.toLowerCase().includes("tipo") ? "blue" : title.toLowerCase().includes("regi") ? "green" : title.toLowerCase().includes("generaci") ? "purple" : "red"} />
         </View>
       )}
     </View>
@@ -128,14 +120,22 @@ export function SearchBox({
   onChangeText: (value: string) => void;
   placeholder?: string;
 }) {
+  const focus = useRef(new Animated.Value(0)).current;
+  useEffect(() => () => focus.stopAnimation(), [focus]);
+  const animateFocus = (toValue: number) => Animated.timing(focus, { toValue, duration: 180, useNativeDriver: true }).start();
   return (
+    <View>
     <TextInput
+      onFocus={() => animateFocus(1)}
+      onBlur={() => animateFocus(0)}
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
       placeholderTextColor="#8090a4"
       style={styles.search}
     />
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: 10, borderWidth: 1, borderColor: palette.blue, opacity: focus }]} />
+    </View>
   );
 }
 
@@ -153,7 +153,7 @@ export function ActionButton({
   disabled?: boolean;
 }) {
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
@@ -174,7 +174,7 @@ export function ActionButton({
       >
         {label}
       </ThemedText>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -198,6 +198,7 @@ export function Chip({
   const customChipStyle =
     !selected && (backgroundColor || borderColor)
       ? {
+          ...gradient(`${backgroundColor ?? "#EEF4FA"}, ${backgroundColor ?? "#EEF4FA"}`),
           backgroundColor: backgroundColor ?? "#EEF4FA",
           borderColor: borderColor ?? palette.line,
         }
@@ -217,15 +218,15 @@ export function Chip({
     </ThemedText>
   );
   return onPress ? (
-    <Pressable
+    <AnimatedPressable pressScale={0.96}
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.chip, customChipStyle, selected && styles.selectedChip]}
+      style={[styles.chip, customChipStyle, selected && styles.selectedChip, disabled && styles.disabledButton]}
     >
       {content}
-    </Pressable>
+    </AnimatedPressable>
   ) : (
     <View style={[styles.chip, customChipStyle]}>{content}</View>
   );
@@ -234,41 +235,17 @@ export function Chip({
 export function PokemonImage({
   pokemon,
   size = "card",
+  breathe = false,
 }: {
   pokemon: Pokemon;
+  breathe?: boolean;
   size?: "card" | "hero" | "detail";
 }) {
-  const storedImage = pokemon.Imagen?.trim() || null;
-  const uri =
-    storedImage && !isLegacyAutomaticPokemonImage(pokemon)
-      ? storedImage
-      : null;
-  const [failed, setFailed] = useState(false);
   const dimension = size === "hero" ? 130 : size === "detail" ? 200 : 100;
+  const artwork = <PokemonArtwork number={pokemon.NumeroPokedex} current={pokemon.Imagen} name={pokemon.Nombre} style={{ width: dimension - 12, height: dimension - 12 }} />;
   return (
-    <View
-      style={[
-        styles.imageFrame,
-        { width: dimension, height: dimension, borderRadius: dimension / 2 },
-      ]}
-    >
-      {!uri || failed ? (
-        <ThemedText
-          accessibilityLabel={`${pokemon.Nombre}: sin imagen disponible`}
-          style={styles.fallback}
-        >
-          ?
-        </ThemedText>
-      ) : (
-        <Image
-          key={uri}
-          accessibilityLabel={pokemon.Nombre}
-          source={{ uri }}
-          contentFit="contain"
-          onError={() => setFailed(true)}
-          style={{ width: dimension - 12, height: dimension - 12 }}
-        />
-      )}
+    <View style={[styles.imageFrame, { width: dimension, height: dimension, borderRadius: dimension / 2 }]}>
+      {breathe ? <FloatingPokemon>{artwork}</FloatingPokemon> : artwork}
     </View>
   );
 }
@@ -324,7 +301,7 @@ export function DemoNotice({ mode }: { mode: "real" | "demo" }) {
 
 export function LoadingState() {
   return (
-    <View style={styles.empty}>
+    <View accessibilityRole="progressbar" style={[styles.empty, { borderColor: palette.blue }]}>
       <ActivityIndicator color={palette.blue} />
     </View>
   );
@@ -338,7 +315,7 @@ export function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <View style={styles.empty}>
+    <View accessibilityRole="alert" style={[styles.empty, { borderColor: "#6E2635" }]}>
       <ThemedText type="subtitle" style={styles.sectionTitle}>
         No se pudo cargar
       </ThemedText>
@@ -378,9 +355,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 18,
   },
-  header: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  header: { paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: palette.line, flexDirection: "row", alignItems: "flex-start", gap: 12 },
   headerCopy: { flex: 1, minWidth: 0 },
   backButton: {
+    ...finish.card,
     width: 40,
     height: 40,
     borderRadius: 10,
@@ -407,6 +385,7 @@ const styles = StyleSheet.create({
   headerBadgeText: { color: palette.white, fontSize: 22, fontWeight: "800" },
   muted: { color: palette.muted, fontSize: 13, lineHeight: 20 },
   search: {
+    ...finish.input,
     height: 48,
     borderWidth: 1,
     borderColor: palette.line,
@@ -420,6 +399,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: palette.ink, fontSize: 23, lineHeight: 30 },
   resultCount: { color: palette.blue, fontSize: 12, fontWeight: "700" },
   chip: {
+    ...finish.card,
     minHeight: 40,
     justifyContent: "center",
     backgroundColor: palette.surfaceAlt,
@@ -431,24 +411,28 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   selectedChip: {
+    ...gradient("#438FFF, #205BBC"),
     backgroundColor: palette.blue,
     borderColor: palette.blue,
   },
   chipText: { color: "#C9D6E8", fontSize: 12, fontWeight: "800" },
   selectedText: { color: palette.white },
   actionButton: {
+    ...finish.red,
     backgroundColor: palette.red,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 9,
+    borderRadius: 12,
     alignItems: "center",
   },
   secondaryButton: {
+    ...finish.card,
     backgroundColor: palette.surfaceAlt,
     borderWidth: 1,
     borderColor: palette.line,
   },
   dangerButton: {
+    ...gradient("#351A25, #24121B"),
     backgroundColor: "#2B1219",
     borderWidth: 1,
     borderColor: "#6E2635",
@@ -457,6 +441,7 @@ const styles = StyleSheet.create({
   actionText: { color: palette.white, fontSize: 13, fontWeight: "800" },
   darkActionText: { color: "#FF7C8E" },
   imageFrame: {
+    ...finish.panel,
     backgroundColor: "#12243A",
     borderWidth: 1,
     borderColor: "#203A5A",
@@ -466,6 +451,7 @@ const styles = StyleSheet.create({
   },
   fallback: { color: palette.muted, fontSize: 52, fontWeight: "900" },
   empty: {
+    ...finish.panel,
     alignItems: "center",
     justifyContent: "center",
     gap: 8,

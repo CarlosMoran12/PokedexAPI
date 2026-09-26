@@ -60,7 +60,37 @@ export function referencePreviewImage(id: number) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 }
 
-export async function listPokemonReference(): Promise<PokemonReferenceListItem[]> {
+let referenceListRequest: Promise<PokemonReferenceListItem[]> | undefined;
+
+// One shared catalog per session, including concurrent callers. Failed loads can retry.
+export function listPokemonReference(): Promise<PokemonReferenceListItem[]> {
+  if (!referenceListRequest) {
+    referenceListRequest = loadPokemonReference().catch((error) => {
+      referenceListRequest = undefined;
+      throw error;
+    });
+  }
+  return referenceListRequest;
+}
+
+export function filterPokemonReference(items: PokemonReferenceListItem[], value: string) {
+  const query = value.trim().toLowerCase();
+  return query ? items.filter((item) =>
+    item.name.toLowerCase().includes(query) || String(item.id).includes(query),
+  ) : items;
+}
+
+export function referenceDestination(
+  item: PokemonReferenceListItem,
+  pokemon: readonly { NumeroPokedex: number; IdPokemon: number }[],
+) {
+  const existing = pokemon.find((entry) => entry.NumeroPokedex === item.id);
+  return existing
+    ? { pathname: '/pokemon/[id]' as const, params: { id: String(existing.IdPokemon) } }
+    : { pathname: '/pokemon/nuevo' as const, params: { speciesId: String(item.id), speciesQuery: item.name } };
+}
+
+async function loadPokemonReference(): Promise<PokemonReferenceListItem[]> {
   let response: Response;
   try {
     response = await fetch(`${REFERENCE_API}/pokemon-species?limit=2000&offset=0`);

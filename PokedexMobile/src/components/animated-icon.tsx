@@ -1,3 +1,5 @@
+import { ModuleIcon } from "./module-icon";
+import { palette } from "@/constants/visual-system";
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState } from 'react';
@@ -33,7 +35,7 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
+  const image = <ModuleIcon size={76} />;
 
   return animate ? (
     <Animated.View
@@ -140,7 +142,7 @@ const styles = StyleSheet.create({
   },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    backgroundColor: palette.canvas,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,

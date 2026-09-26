@@ -1,6 +1,7 @@
+import { AnimatedPressable } from "@/components/animated-pressable";
 import { Image } from 'expo-image';
 import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Platform, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ExternalLink } from '@/components/external-link';
@@ -45,7 +46,7 @@ export default function TabTwoScreen() {
           </ThemedText>
 
           <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
+            <AnimatedPressable style={({ pressed }) => pressed && styles.pressed}>
               <ThemedView type="backgroundElement" style={styles.linkButton}>
                 <ThemedText type="link">Expo documentation</ThemedText>
                 <SymbolView
@@ -54,7 +55,7 @@ export default function TabTwoScreen() {
                   size={12}
                 />
               </ThemedView>
-            </Pressable>
+            </AnimatedPressable>
           </ExternalLink>
         </ThemedView>
 

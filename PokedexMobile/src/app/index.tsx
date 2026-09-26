@@ -1,6 +1,12 @@
+﻿import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { ModuleIcon } from "@/components/module-icon";
+import { finish, gradient } from "@/constants/visual-system";
+import { HomeAutocomplete } from "@/components/home-autocomplete";
+import { AnimatedPressable } from "@/components/animated-pressable";
 import { Link, router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
   Pressable,
   StyleSheet,
   Text,
@@ -16,9 +22,9 @@ import {
   PokemonImage,
   ScreenHeader,
   ScreenShell,
-  SearchBox,
   palette,
 } from "@/components/pokedex-ui";
+import { Entrance, useAmbientMotion } from "@/components/home-motion";
 import { usePokedexStore } from "@/data/pokedex-store";
 
 export default function HomeScreen() {
@@ -26,6 +32,21 @@ export default function HomeScreen() {
   const store = usePokedexStore();
   const { pokemon, regiones, tipos, generaciones } = store;
   const [query, setQuery] = useState("");
+  const ambient = useAmbientMotion(7000);
+  const reaction = useRef(new Animated.Value(0)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  const navigating = useRef(false);
+  useEffect(() => () => { reaction.stopAnimation(); buttonScale.stopAnimation(); }, [reaction, buttonScale]);
+  const pressScale = (toValue: number) => Animated.timing(buttonScale, { toValue, duration: 100, useNativeDriver: true }).start();
+  const explore = () => {
+    if (navigating.current) return;
+    navigating.current = true;
+    Animated.timing(reaction, { toValue: 1, duration: 200, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) router.push({ pathname: "/pokemon", params: query.trim() ? { query } : {} });
+      reaction.setValue(0);
+      navigating.current = false;
+    });
+  };
 
   const featured = useMemo(
     () => pokemon.find((item) => item.NumeroPokedex === 94) ?? pokemon[0],
@@ -78,12 +99,11 @@ export default function HomeScreen() {
 
   return (
     <ScreenShell>
+      <Entrance style={{ gap: 18 }}>
       {width >= 760 ? (
         <View style={styles.navbar}>
           <View style={styles.brand}>
-            <View style={styles.brandBall}>
-              <Text style={styles.brandBallText}>●</Text>
-            </View>
+            <ModuleIcon size={34} />
             <Text style={styles.brandName}>
               POKÉDEX<Text style={styles.brandAccent}>MASTER</Text>
             </Text>
@@ -106,15 +126,15 @@ export default function HomeScreen() {
       <View
         style={[
           styles.showcase,
-          width < 760 && { flexDirection: "column" },
+          width < 760 && { flexDirection: "column", padding: width < 380 ? 16 : 28 },
         ]}
       >
         <View style={[styles.showcaseCopy, width < 760 && styles.showcaseCopyMobile]}>
           <Text style={styles.kicker}>— EXPLORA. DESCUBRE. COMPLETA.</Text>
-          <Text style={styles.showcaseTitle}>
-            Tu Pokédex,{"\n"}
-            <Text style={styles.showcaseTitleAccent}>más visual.</Text>
-          </Text>
+          <View>
+            <Entrance><Text style={[styles.showcaseTitle, width < 380 && { fontSize: 36, lineHeight: 42 }]}>Tu Pokédex,</Text></Entrance>
+            <Entrance delay={140}><Text style={[styles.showcaseTitle, styles.showcaseTitleAccent, width < 380 && { fontSize: 36, lineHeight: 42 }]}>más visual.</Text></Entrance>
+          </View>
           <Text style={styles.showcaseSubtitle}>
             Busca especies, revisa sus datos y navega por tipos, regiones y generaciones.
           </Text>
@@ -126,20 +146,18 @@ export default function HomeScreen() {
             ]}
           >
             <View style={styles.searchInputWrap}>
-              <SearchBox
+              <HomeAutocomplete
+                pokemon={pokemon}
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Buscar por nombre o número..."
               />
             </View>
-            <Link
-              href={{ pathname: "/pokemon", params: query.trim() ? { query } : {} }}
-              asChild
-            >
-              <Pressable style={styles.heroCta}>
+            <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+              <Pressable accessibilityRole="button" onPressIn={() => pressScale(0.98)} onPressOut={() => pressScale(1)} onPress={explore} style={styles.heroCta}>
                 <Text style={styles.heroCtaText}>Explorar Pokédex →</Text>
               </Pressable>
-            </Link>
+            </Animated.View>
           </View>
 
           <View style={[styles.statsRow, width < 760 && styles.statsRowMobile]}>
@@ -152,8 +170,12 @@ export default function HomeScreen() {
 
         {showcasePokemon ? (
           <View style={[styles.showcaseArt, width < 760 && styles.showcaseArtMobile]}>
-            <View style={styles.glowRing}>
-              <PokemonImage pokemon={showcasePokemon} size="detail" />
+            <View style={{ padding: 18 }}>
+              <Animated.View pointerEvents="none" style={[styles.glowRing, StyleSheet.absoluteFill, {
+                opacity: Animated.multiply(ambient.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }), reaction.interpolate({ inputRange: [0, 1], outputRange: [1, 0.8] })),
+                transform: [{ scale: Animated.multiply(ambient.interpolate({ inputRange: [0, 1], outputRange: [1, 1.03] }), reaction.interpolate({ inputRange: [0, 1], outputRange: [1, 1.05] })) }, { rotate: ambient.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '12deg'] }) }],
+              }]} />
+              <PokemonImage key={showcasePokemon.IdPokemon} pokemon={showcasePokemon} size="detail" breathe />
             </View>
             <Text style={styles.showcasePokemonName}>{showcasePokemon.Nombre}</Text>
             <Text style={styles.showcasePokemonMeta}>
@@ -173,7 +195,7 @@ export default function HomeScreen() {
           ]}
         >
           <View style={styles.featuredImage}>
-            <PokemonImage pokemon={featured} size="hero" />
+            <PokemonImage key={featured.IdPokemon} pokemon={featured} size="hero" breathe />
           </View>
 
           <View style={styles.featuredCopy}>
@@ -213,9 +235,9 @@ export default function HomeScreen() {
           <View style={styles.sectionHeadingRow}>
             <Text style={styles.sectionTitle}>🔥 Pokémon destacados</Text>
             <Link href="/pokemon" asChild>
-              <Pressable>
+              <AnimatedPressable pressScale={0.96}>
                 <Text style={styles.sectionLink}>Ver todos →</Text>
-              </Pressable>
+              </AnimatedPressable>
             </Link>
           </View>
 
@@ -231,7 +253,7 @@ export default function HomeScreen() {
                 .filter(Boolean) as string[];
 
               return (
-                <Pressable
+                <AnimatedPressable
                   key={item.IdPokemon}
                   style={({ pressed }) => [
                     styles.pokemonCard,
@@ -258,7 +280,7 @@ export default function HomeScreen() {
                     </View>
                     <Text style={styles.cardLink}>Ver detalle →</Text>
                   </View>
-                </Pressable>
+                </AnimatedPressable>
               );
             })}
           </View>
@@ -266,7 +288,12 @@ export default function HomeScreen() {
       ) : null}
 
       <View style={styles.sectionHeading}>
-        <Text style={styles.sectionTitle}>▦ Accesos rápidos</Text>
+        <View style={styles.quickHeadingRow}>
+          <View style={styles.quickHeadingIcon} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <MaterialCommunityIcons name="flash-outline" size={20} color={palette.white} />
+          </View>
+          <Text style={styles.sectionTitle}>Accesos rápidos</Text>
+        </View>
         <Text style={styles.sectionSubtitle}>
           Consulta los catálogos disponibles.
         </Text>
@@ -279,7 +306,7 @@ export default function HomeScreen() {
           count={pokemon.length}
           description="Consulta, filtra y administra Pokémon."
           tone="red"
-          symbol="◉"
+
         />
         <AccessCard
           href="/tipos"
@@ -287,7 +314,7 @@ export default function HomeScreen() {
           count={tipos.length}
           description="Catálogo y relaciones Pokémon–Tipo."
           tone="blue"
-          symbol="◆"
+
         />
         <AccessCard
           href="/regiones"
@@ -295,7 +322,7 @@ export default function HomeScreen() {
           count={regiones.length}
           description="Organiza las regiones del mundo Pokémon."
           tone="green"
-          symbol="▥"
+
         />
         <AccessCard
           href="/generaciones"
@@ -303,9 +330,10 @@ export default function HomeScreen() {
           count={generaciones.length}
           description="Relaciona generaciones con regiones."
           tone="purple"
-          symbol="≋"
+
         />
       </View>
+      </Entrance>
     </ScreenShell>
   );
 }
@@ -321,7 +349,8 @@ function NavLink({
 }) {
   return (
     <Link href={href} asChild>
-      <Pressable
+      <AnimatedPressable
+        pressScale={0.97}
         style={StyleSheet.flatten([
           styles.navLink,
           active && styles.navLinkActive,
@@ -330,7 +359,7 @@ function NavLink({
         <Text style={[styles.navLinkText, active && styles.navLinkTextActive]}>
           {label}
         </Text>
-      </Pressable>
+      </AnimatedPressable>
     </Link>
   );
 }
@@ -344,11 +373,12 @@ function Stat({
   label: string;
   accent: "red" | "blue" | "green" | "purple";
 }) {
+  const pulse = useAmbientMotion(3000);
   return (
     <View style={styles.stat}>
-      <View style={[styles.statDot, styles[`stat_${accent}`]]} />
+      <Animated.View style={[styles.statDot, styles[`stat_${accent}`], { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.75, 1] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) }] }]} />
       <View>
-        <Text style={styles.statValue}>{value}</Text>
+        <Entrance key={value}><Text style={styles.statValue}>{value}</Text></Entrance>
         <Text style={styles.statLabel}>{label}</Text>
       </View>
     </View>
@@ -361,27 +391,23 @@ function AccessCard({
   count,
   description,
   tone,
-  symbol,
 }: {
   href: "/pokemon" | "/tipos" | "/regiones" | "/generaciones";
   title: string;
   count: number;
   description: string;
   tone: "red" | "blue" | "green" | "purple";
-  symbol: string;
 }) {
   return (
     <Link href={href} asChild>
-      <Pressable
+      <AnimatedPressable
         style={({ pressed }) => [
           styles.quickPressable,
           pressed && styles.pressed,
         ]}
       >
-        <View style={[styles.quickCard, styles["quick_" + tone]]}>
-          <View style={[styles.quickIcon, styles["quickIcon_" + tone]]}>
-            <Text style={styles.quickIconText}>{symbol}</Text>
-          </View>
+        <View style={[styles.quickCard, styles[`quick_${tone}`]]}>
+          <ModuleIcon tone={tone} />
 
           <View style={styles.quickCopy}>
             <View style={styles.quickTitleRow}>
@@ -399,7 +425,7 @@ function AccessCard({
             <Text style={styles.quickArrow}>{">"}</Text>
           </View>
         </View>
-      </Pressable>
+      </AnimatedPressable>
     </Link>
   );
 }
@@ -457,6 +483,8 @@ function Badge({
 
 const styles = StyleSheet.create({
   navbar: {
+    ...finish.panel,
+    flexWrap: "wrap",
     minHeight: 64,
     paddingHorizontal: 18,
     borderWidth: 1,
@@ -510,6 +538,7 @@ const styles = StyleSheet.create({
   navBadgeText: { color: palette.ink, fontWeight: "900", fontSize: 18 },
 
   showcase: {
+    ...finish.panel,
     minHeight: 390,
     padding: 28,
     borderRadius: 20,
@@ -548,8 +577,10 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
     maxWidth: 760,
   },
-  searchInputWrap: { flex: 1, minWidth: 220 },
+  searchInputWrap: { flex: 1, minWidth: 0 },
   heroCta: {
+    ...finish.red,
+    minHeight: 48,
     minWidth: 180,
     borderRadius: 10,
     paddingHorizontal: 18,
@@ -569,7 +600,7 @@ const styles = StyleSheet.create({
     gap: 14,
     justifyContent: "space-between",
   },
-  stat: { flexDirection: "row", alignItems: "center", gap: 9, minWidth: 100 },
+  stat: { paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 9, minWidth: 100 },
   statDot: { width: 10, height: 10, borderRadius: 5 },
   stat_red: { backgroundColor: palette.red },
   stat_blue: { backgroundColor: palette.blue },
@@ -606,6 +637,7 @@ const styles = StyleSheet.create({
   showcasePokemonMeta: { color: palette.muted, fontSize: 12 },
 
   featured: {
+    ...finish.panel,
     minHeight: 210,
     padding: 20,
     borderRadius: 16,
@@ -649,6 +681,25 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
+  quickHeadingRow: {
+    height: 31,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  quickHeadingIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: palette.surfaceAlt,
+    ...gradient(`${palette.surfaceAlt}, #164D80`),
+    borderWidth: 1,
+    borderColor: "#285487",
+    boxShadow: "0px 2px 7px rgba(59,130,246,0.14), inset 0px 1px 1px rgba(255,255,255,0.08)",
+  },
   sectionHeading: { gap: 2 },
   sectionTitle: {
     color: palette.ink,
@@ -661,6 +712,7 @@ const styles = StyleSheet.create({
 
   pokemonGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   pokemonCard: {
+    ...finish.card,
     width: "23%",
     flexGrow: 1,
     minWidth: 210,
@@ -699,6 +751,7 @@ const styles = StyleSheet.create({
   },
 
   quickCard: {
+    ...finish.panel,
     width: "100%",
     minHeight: 112,
     padding: 16,
@@ -710,21 +763,25 @@ const styles = StyleSheet.create({
   },
 
   quick_red: {
+    ...gradient("#241B2A, #151625"),
     backgroundColor: "#181620",
     borderColor: "#6C2940",
   },
 
   quick_blue: {
+    ...gradient("#14293F, #0D1A2A"),
     backgroundColor: "#101D2B",
     borderColor: "#25577E",
   },
 
   quick_green: {
+    ...gradient("#15332D, #0D211E"),
     backgroundColor: "#10231F",
     borderColor: "#24664F",
   },
 
   quick_purple: {
+    ...gradient("#271F3F, #16162B"),
     backgroundColor: "#19172B",
     borderColor: "#543782",
   },
@@ -780,6 +837,7 @@ const styles = StyleSheet.create({
   },
 
   quickCountBadge: {
+    ...finish.input,
     minWidth: 32,
     height: 26,
     paddingHorizontal: 9,
@@ -804,6 +862,7 @@ const styles = StyleSheet.create({
   },
 
   quickArrowBox: {
+    ...finish.red,
     width: 34,
     height: 34,
     borderRadius: 17,
@@ -822,3 +881,4 @@ const styles = StyleSheet.create({
 
   pressed: { opacity: 0.75 },
 });
+

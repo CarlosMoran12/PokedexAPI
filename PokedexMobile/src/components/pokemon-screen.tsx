@@ -1,7 +1,9 @@
-import { Image } from "expo-image";
+import { AnimatedPressable } from "@/components/animated-pressable";
+import { PokemonArtwork } from "./pokemon-artwork";
+import { finish, gradient } from "@/constants/visual-system";
 import { Link, router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import {
   ActionButton,
@@ -26,6 +28,7 @@ import {
   generationDisplayName,
   generationNumberFromLocalName,
   getPokemonReference,
+  filterPokemonReference,
   listPokemonReference,
   typeNameInSpanish,
   type PokemonReferenceDetail,
@@ -310,7 +313,7 @@ function PokemonCard({ pokemonId }: { pokemonId: number }) {
     .filter(Boolean)
     .join(" · ");
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={() =>
         router.push({
           pathname: "/pokemon/[id]",
@@ -325,7 +328,7 @@ function PokemonCard({ pokemonId }: { pokemonId: number }) {
       </TextLabel>
       <TextLabel bold>{item.Nombre}</TextLabel>
       <TextLabel muted>{types || "Sin tipos asignados"}</TextLabel>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -469,7 +472,7 @@ export function PokemonDetailScreen() {
   );
 }
 export function PokemonFormScreen({ edit }: { edit: boolean }) {
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: string; speciesId?: string; speciesQuery?: string }>();
   const store = usePokedexStore();
   const existing = store.pokemon.find(
     (item) => item.IdPokemon === Number(params.id),
@@ -490,10 +493,10 @@ export function PokemonFormScreen({ edit }: { edit: boolean }) {
         />
       </ScreenShell>
     );
-  return <PokemonFormContent key={edit ? params.id : "new"} edit={edit} />;
+  return <PokemonFormContent key={edit ? params.id : `new-${params.speciesId ?? ""}`} edit={edit} />;
 }
 function PokemonFormContent({ edit }: { edit: boolean }) {
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: string; speciesId?: string; speciesQuery?: string }>();
   const store = usePokedexStore();
   const existing = store.pokemon.find(
     (item) => item.IdPokemon === Number(params.id),
@@ -517,7 +520,8 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
     existing?.IdGeneracion ?? store.generaciones[0]?.IdGeneracion ?? 0,
   );
   const [referenceTypes, setReferenceTypes] = useState<string[]>([]);
-  const [referenceQuery, setReferenceQuery] = useState("");
+  const [referenceQuery, setReferenceQuery] = useState(!edit ? params.speciesQuery ?? "" : "");
+  const preselected = useRef(false);
   const [referenceItems, setReferenceItems] = useState<
     PokemonReferenceListItem[]
   >([]);
@@ -552,19 +556,12 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
     };
   }, [edit]);
 
-  const filteredReference = useMemo(() => {
-    const query = referenceQuery.trim().toLowerCase();
-    const candidates = query
-      ? referenceItems.filter(
-          (item) =>
-            item.name.toLowerCase().includes(query) ||
-            String(item.id).includes(query),
-        )
-      : referenceItems;
-    return candidates.slice(0, 30);
-  }, [referenceItems, referenceQuery]);
+  const filteredReference = useMemo(
+    () => filterPokemonReference(referenceItems, referenceQuery).slice(0, 30),
+    [referenceItems, referenceQuery],
+  );
 
-  const selectReference = async (item: PokemonReferenceListItem) => {
+  const selectReference = useCallback(async (item: PokemonReferenceListItem) => {
     setValidation("");
     setReferenceError("");
     if (store.pokemon.some((pokemon) => pokemon.NumeroPokedex === item.id)) {
@@ -602,7 +599,14 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
     } finally {
       setReferenceLoading(false);
     }
-  };
+  }, [store.pokemon, store.generaciones]);
+
+  useEffect(() => {
+    if (edit || preselected.current || !referenceItems.length || !params.speciesId) return;
+    const item = referenceItems.find((entry) => entry.id === Number(params.speciesId));
+    preselected.current = true;
+    if (item) void selectReference(item);
+  }, [edit, params.speciesId, referenceItems, selectReference]);
 
   const updateFromReference = async () => {
     setValidation("");
@@ -911,7 +915,7 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
                     (pokemon) => pokemon.NumeroPokedex === item.id,
                   );
                   return (
-                    <Pressable
+                    <AnimatedPressable
                       key={item.id}
                       disabled={alreadyAdded || referenceLoading}
                       onPress={() => {
@@ -924,9 +928,8 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
                         alreadyAdded && styles.referenceCardDisabled,
                       ]}
                     >
-                      <Image
-                        source={{ uri: item.image }}
-                        contentFit="contain"
+                      <PokemonArtwork
+                        number={item.id} current={item.image} name={item.name}
                         style={styles.referenceImage}
                       />
                       <TextLabel bold>{item.name}</TextLabel>
@@ -934,7 +937,7 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
                         #{String(item.id).padStart(3, "0")}
                         {alreadyAdded ? " · Ya añadido" : ""}
                       </TextLabel>
-                    </Pressable>
+                    </AnimatedPressable>
                   );
                 })}
               </View>
@@ -954,10 +957,9 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
           <>
             <TextLabel bold>{edit ? "Información" : "2. Información detectada"}</TextLabel>
             <View style={styles.selectedPokemon}>
-              {image ? (
-                <Image
-                  source={{ uri: image }}
-                  contentFit="contain"
+              {image || Number(number) > 0 ? (
+                <PokemonArtwork
+                  number={Number(number)} current={image} name={name}
                   style={styles.selectedPokemonImage}
                 />
               ) : null}
@@ -1085,12 +1087,13 @@ function PokemonFormContent({ edit }: { edit: boolean }) {
 const styles = StyleSheet.create({
   toolbar: { gap: 10 },
   filters: {
+    ...finish.panel,
     gap: 10,
     padding: 14,
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 14,
+    borderRadius: 18,
     borderLeftWidth: 4,
     borderLeftColor: palette.blue,
   },
@@ -1104,6 +1107,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   card: {
+    ...finish.card,
     width: "31%",
     flexGrow: 1,
     minWidth: 145,
@@ -1112,7 +1116,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 14,
+    borderRadius: 18,
     borderTopWidth: 3,
     borderTopColor: "#2E5F96",
   },
@@ -1120,6 +1124,7 @@ const styles = StyleSheet.create({
   muted: { color: palette.muted, fontSize: 12 },
   bold: { fontWeight: "800" },
   detailHero: {
+    ...finish.panel,
     padding: 22,
     flexDirection: "column",
     alignItems: "center",
@@ -1133,29 +1138,32 @@ const styles = StyleSheet.create({
   },
   detailCopy: { width: "100%", gap: 6 },
   detailBox: {
+    ...finish.panel,
     padding: 14,
     gap: 10,
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   form: {
+    ...finish.panel,
     gap: 14,
     padding: 14,
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   referenceBox: {
+    ...finish.panel,
     gap: 10,
     padding: 12,
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   referenceGrid: {
     flexDirection: "row",
@@ -1163,6 +1171,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   referenceCard: {
+    ...finish.card,
     width: "30%",
     minWidth: 110,
     flexGrow: 1,
@@ -1172,9 +1181,10 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   referenceCardSelected: {
+    ...gradient("#382033, #201728"),
     borderColor: palette.red,
     borderWidth: 2,
     backgroundColor: "#221522",
@@ -1182,30 +1192,34 @@ const styles = StyleSheet.create({
   referenceCardDisabled: { opacity: 0.45 },
   referenceImage: { width: 72, height: 72 },
   selectedPokemon: {
+    ...finish.panel,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     padding: 12,
     backgroundColor: palette.surfaceAlt,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: palette.line,
   },
   selectedPokemonImage: { width: 100, height: 100 },
   selectedPokemonCopy: { flex: 1, gap: 4 },
   detectedData: {
+    ...finish.panel,
     gap: 5,
     padding: 10,
     backgroundColor: palette.surface,
     borderRadius: 10,
   },
   editFields: {
+    ...finish.panel,
     gap: 8,
     padding: 10,
     backgroundColor: palette.surface,
     borderRadius: 10,
   },
   input: {
+    ...finish.input,
     minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 10,

@@ -1,6 +1,8 @@
+import { finish, gradient } from "@/constants/visual-system";
+import { AnimatedPressable } from "@/components/animated-pressable";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import {
   ActionButton,
@@ -197,7 +199,7 @@ export function CatalogScreen({ kind }: { kind: CatalogKind }) {
           {kind === "generaciones" ? (
             <View style={styles.regionChoices}>
               {store.regiones.map((region) => (
-                <Pressable
+                <AnimatedPressable
                   key={region.IdRegion}
                   onPress={() => setRegionId(region.IdRegion)}
                   style={[
@@ -213,7 +215,7 @@ export function CatalogScreen({ kind }: { kind: CatalogKind }) {
                   >
                     {region.Nombre}
                   </Text>
-                </Pressable>
+                </AnimatedPressable>
               ))}
             </View>
           ) : null}
@@ -327,16 +329,18 @@ function TextLabel({
 const styles = StyleSheet.create({
   actions: { gap: 10 },
   editor: {
+    ...finish.panel,
     gap: 10,
     padding: 14,
     backgroundColor: palette.surfaceAlt,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 14,
+    borderRadius: 18,
     borderLeftWidth: 4,
     borderLeftColor: palette.blue,
   },
   input: {
+    ...finish.input,
     height: 44,
     borderWidth: 1,
     borderColor: palette.line,
@@ -347,6 +351,7 @@ const styles = StyleSheet.create({
   },
   regionChoices: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   choice: {
+    ...finish.card,
     padding: 8,
     borderWidth: 1,
     borderColor: palette.line,
@@ -354,16 +359,18 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   choiceSelected: {
+    ...gradient("#438FFF, #205BBC"),
     backgroundColor: palette.blue,
     borderColor: palette.blue,
   },
   editorActions: { flexDirection: "row", gap: 8 },
   row: {
+    ...finish.panel,
     padding: 14,
     borderWidth: 1,
     borderColor: palette.line,
     backgroundColor: palette.surface,
-    borderRadius: 14,
+    borderRadius: 18,
     borderLeftWidth: 3,
     borderLeftColor: "#2E5F96",
     gap: 12,

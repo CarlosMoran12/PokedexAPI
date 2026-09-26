@@ -1,12 +1,14 @@
+import { AnimatedPressable } from "./animated-pressable";
 import { Href, Link } from 'expo-router';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
 import { type ComponentProps } from 'react';
 
 type Props = Omit<ComponentProps<typeof Link>, 'href'> & { href: Href & string };
 
-export function ExternalLink({ href, ...rest }: Props) {
+export function ExternalLink({ href, children, asChild, ...rest }: Props) {
   return (
     <Link
+      asChild
       target="_blank"
       {...rest}
       href={href}
@@ -20,6 +22,8 @@ export function ExternalLink({ href, ...rest }: Props) {
           });
         }
       }}
-    />
+    >
+      {asChild ? children : <AnimatedPressable pressScale={0.97}>{children}</AnimatedPressable>}
+    </Link>
   );
 }
