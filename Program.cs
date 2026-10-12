@@ -1,80 +1,46 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 using PokedexAPI.Data;
 using PokedexAPI.Endpoints;
 using PokedexAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString =
-    builder.Configuration.GetConnectionString("PokedexConnection")
-    ?? throw new InvalidOperationException("No se encontró la cadena de conexión.");
-
+// 1. Base de datos InMemory
 builder.Services.AddDbContext<CatalogoDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseInMemoryDatabase("PokedexDb"));
 
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy("ExpoDevelopment", policy =>
-        {
-            policy
-                .WithOrigins("http://localhost:8081", "http://localhost:8082")
-                .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .AllowAnyHeader();
-        });
-    });
-}
+// 2. Registro de Inyección de Dependencias
+// Servicios con interfaz
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IEquipoService, EquipoService>();
+builder.Services.AddScoped<IEquipoPokemonService, EquipoPokemonService>();
+builder.Services.AddScoped<IFavoritoService, FavoritoService>();
 
-#region Servicios
+// Servicios concretos (sin interfaz)
 builder.Services.AddScoped<PokemonService>();
+builder.Services.AddScoped<RegionService>();
 builder.Services.AddScoped<TipoService>();
 builder.Services.AddScoped<PokemonTipoService>();
-builder.Services.AddScoped<RegionService>();
 builder.Services.AddScoped<GeneracionService>();
-#endregion
 
-#region Swagger
+// 3. Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "PokedexMaster API",
-        Version = "v1",
-        Description = "API REST para la aplicación PokedexMaster"
-    });
-});
-#endregion
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-#region Swagger UI
-app.UseSwagger();
-app.UseSwaggerUI(options =>
-{
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "PokedexMaster API v1");
-    options.RoutePrefix = "swagger";
-});
-#endregion
-
 if (app.Environment.IsDevelopment())
 {
-    app.UseCors("ExpoDevelopment");
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-app.MapGet("/", () => Results.Ok(new
-{
-    api = "PokedexMaster API",
-    estado = "Funcionando",
-    swagger = "/swagger"
-}));
+app.UseHttpsRedirection();
 
-app.MapPokemonEndpoints();
-app.MapTipoEndpoints();
-app.MapPokemonTipoEndpoints();
-app.MapRegionEndpoints();
-app.MapGeneracionEndpoints();
+// 4. Mapeo de Endpoints
+app.MapUsuarioEndpoints();
+app.MapEquipoEndpoints();
+app.MapEquipoPokemonEndpoints();
+app.MapFavoritoEndpoints();
 
 app.Run();
